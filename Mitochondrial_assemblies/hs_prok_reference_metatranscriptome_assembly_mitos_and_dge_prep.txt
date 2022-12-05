@@ -1,0 +1,448 @@
+#Hymeraphia stellifera assembly of prokaryotic RNA (rRNA depleted reads) from all total RNA sequences
+# metatranscriptome assembly in order to get mitochondrial genes
+
+#start by quality control of data 
+#root: 
+/media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/
+
+#move hs fastq files to separate folder
+
+/home/nanopore/FastQC/fastqc *.fastq
+
+#all samples have lots of overrepresented sequences
+#blasted -> they are ribosomal sequnces (some matching sponges)
+
+#include DNAsense raw file (DC129) prok RNA
+
+#trimming (save files for DGE - after repair)
+
+
+#tried to remove over represented sequences (12% of reads) from file. Seems to work 
+
+#below didn't work
+#PAIRED: kept 5104528 out of 40217789
+#UNPAIRED: kept 79549 out of 712081
+#gzip: 7351_S20_R2_001.trim: file size changed while zipping
+#gzip: 7347_S16_R1_001.fastq: No such file or directory
+
+cat 7347_S16_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -a /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/Overrepresented_sequences.tab -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7347_S16_R1_001.trim &&
+cat 7347_S16_R2_001.fastq | f7347_S16_R1_001.astx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -a /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/Overrepresented_sequences.tab -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7347_S16_R2_001.trim &&
+rePair.pl 7347_S16_R1_001.trim 7347_S16_R2_001.trim &&
+gzip 7347_S16_R1_001.fastq &&
+gzip 7347_S16_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7347_S16_R1_001.trim right=R2_7347_S16_R2_001.trim unp=Unp_7347_S16_R1_001.trim_7347_S16_R2_001.trim &&
+
+gzip 7347_S16_R1_001.fastq &&
+gzip 7347_S16_R2_001.fastq
+
+#didn't run overnight 
+
+cat 7348_S17_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -a /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/Overrepresented_sequences.tab -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7348_S17_R1_001.trim &&
+cat 7348_S17_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -a /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/Overrepresented_sequences.tab -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7348_S17_R2_001.trim &&
+rePair.pl 7348_S17_R1_001.trim 7348_S17_R2_001.trim &&
+gzip 7348_S17_R1_001.fastq &&
+gzip 7348_S17_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7348_S17_R1_001.trim right=R2_7348_S17_R2_001.trim unp=Unp_7348_S17_R1_001.trim_7348_S17_R2_001.trim &&
+cat 7349_S18_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -a /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/Overrepresented_sequences.tab -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7349_S18_R1_001.trim &&
+cat 7349_S18_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -a /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/Overrepresented_sequences.tab -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7349_S18_R2_001.trim &&
+rePair.pl 7349_S18_R1_001.trim 7349_S18_R2_001.trim &&
+gzip 7349_S18_R1_001.fastq &&
+gzip 7349_S18_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7349_S18_R1_001.trim right=R2_7349_S18_R2_001.trim unp=Unp_7349_S18_R1_001.trim_7349_S18_R2_001.trim &&
+cat 7350_S19_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -a /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/Overrepresented_sequences.tab -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7350_S19_R1_001.trim &&
+cat 7350_S19_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -a /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/Overrepresented_sequences.tab -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7350_S19_R2_001.trim &&cannot open right reads 7351_S20_R2_001.trim
+rePair.pl 7350_S19_R1_001.trim 7350_S19_R2_001.trim &&
+gzip 7350_S19_R1_001.fastq &&
+gzip 7350_S19_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7350_S19_R1_001.trim right=R2_7350_S19_R2_001.trim unp=Unp_7350_S19_R1_001.trim_7350_S19_R2_001.trim &&
+
+#PAIRED: kept 6113011 out of 45106599
+#UNPAIRED: kept 71233 out of 629361
+#PAIRED: kept 9892831 out of 46659436
+#UNPAIRED: kept 126471 out of 846046
+#PAIRED: kept 8092095 out of 36468291
+#UNPAIRED: kept 85581 out of 530263
+
+
+#below errored:
+#cannot open right reads 7351_S20_R2_001.trim
+
+cat 7351_S20_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -a /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/Overrepresented_sequences.tab -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7351_S20_R1_001.trim &&
+cat 7351_S20_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -a /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/Overrepresented_sequences.tab -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7351_S20_R2_001.trim &&
+rePair.pl 7351_S20_R1_001.trim 7351_S20_R2_001.trim &&
+gzip 7351_S20_R1_001.fastq &&
+gzip 7351_S20_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7351_S20_R1_001.trim right=R2_7351_S20_R2_001.trim unp=Unp_7351_S20_R1_001.trim_7351_S20_R2_001.trim &&
+cat 7352_S21_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -a /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/Overrepresented_sequences.tab -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7352_S21_R1_001.trim &&
+cat 7352_S21_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -a /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/Overrepresented_sequences.tab -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7352_S21_R2_001.trim &&
+rePair.pl 7352_S21_R1_001.trim 7352_S21_R2_001.trim &&
+gzip 7352_S21_R1_001.fastq &&
+gzip 7352_S21_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7352_S21_R1_001.trim right=R2_7352_S21_R2_001.trim unp=Unp_7352_S21_R1_001.trim_7352_S21_R2_001.trim &&
+cat 7353_S22_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -a /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/Overrepresented_sequences.tab -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7353_S22_R1_001.trim &&
+cat 7353_S22_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -a /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/Overrepresented_sequences.tab -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7353_S22_R2_001.trim &&
+rePair.pl 7353_S22_R1_001.trim 7353_S22_R2_001.trim &&
+gzip 7353_S22_R1_001.fastq &&
+gzip 7353_S22_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7353_S22_R1_001.trim right=R2_7353_S22_R2_001.trim unp=Unp_7353_S22_R1_001.trim_7353_S22_R2_001.trim 
+
+
+#below worked :)
+cat 7354_S23_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -a /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/Overrepresented_sequences.tab -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7354_S23_R1_001.trim &&
+cat 7354_S23_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -a /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/Overrepresented_sequences.tab -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7354_S23_R2_001.trim &&
+rePair.pl 7354_S23_R1_001.trim 7354_S23_R2_001.trim &&
+gzip 7354_S23_R1_001.fastq &&
+gzip 7354_S23_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7354_S23_R1_001.trim right=R2_7354_S23_R2_001.trim unp=Unp_7354_S23_R1_001.trim_7354_S23_R2_001.trim &&
+cat 18100FL-09-01-03_S3_L001_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -a /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/Overrepresented_sequences.tab -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 18100FL-09-01-03_S3_L001_R1_001.trim &&
+cat 18100FL-09-01-03_S3_L001_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -a /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/Overrepresented_sequences.tab -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 18100FL-09-01-03_S3_L001_R2_001.trim &&
+rePair.pl 18100FL-09-01-03_S3_L001_R1_001.trim 18100FL-09-01-03_S3_L001_R2_001.trim &&
+gzip 18100FL-09-01-03_S3_L001_R1_001.fastq &&
+gzip 18100FL-09-01-03_S3_L001_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_18100FL-09-01-03_S3_L001_R1_001.trim right=R2_18100FL-09-01-03_S3_L001_R2_001.trim unp=Unp_18100FL-09-01-03_S3_L001_R1_001.trim_18100FL-09-01-03_S3_L001_R2_001.trim &&
+
+######
+#rerun samples without *.dedup
+
+R1_18100FL-09-01-03_S3_L001_R1_001.trim.dedup
+R1_7347_S16_R1_001.trim.dedup
+R1_7348_S17_R1_001.trim.dedup
+R1_7349_S18_R1_001.trim.dedup
+R1_7350_S19_R1_001.trim.dedup
+R1_7354_S23_R1_001.trim.dedup
+
+#re+do 51-53
+
+#only 3 samples processed over night 
+#must be best to only run one batch at a time.... will wait for current to finish.
+
+#template
+cat 7324_S16_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -a /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/Overrepresented_sequences.tab -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7324_S16_R1_001.trim &&
+cat 7324_S16_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -a /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/Overrepresented_sequences.tab -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7324_S16_R2_001.trim &&
+rePair.pl 7324_S16_R1_001.trim 7324_S16_R2_001.trim &&
+gzip 7324_S16_R1_001.fastq &&
+gzip 7324_S16_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7324_S16_R1_001.trim right=R2_7324_S16_R2_001.trim unp=Unp_7324_S16_R1_001.trim_7324_S16_R2_001.trim &&
+
+PAIRED: kept 9948245 out of 48629293
+UNPAIRED: kept 108152 out of 746545
+PAIRED: kept 5108904 out of 32843851
+UNPAIRED: kept 65770 out of 480515
+PAIRED: kept 7583712 out of 44120174
+UNPAIRED: kept 95148 out of 704866
+
+
+#check if deduplication step has removed overrepresented rRNA sequences with another fastqc round 
+
+#combine sequences
+#Putting all prok files together ofr HS 
+##deduplicate again
+cat R1*.dedup > R1_hs_prok.dedup &&
+cat R2*.dedup > R2_hs_prok.dedup &&
+cat Unp*.dedup > Unp_hs_prok.dedup &&
+dedupTranscriptome.pl left=R1_hs_prok.dedup right=R2_hs_prok.dedup unp=Unp_hs_prok.dedup
+
+PAIRED: kept 48688772 out of 61922220
+UNPAIRED: kept 708841 out of 1037527
+
+
+#add suffixes and assemble
+cat R1_hs_prok.dedup.dedup | perl -pe 's/^(\@A0.+)$/$1\/1/' > R1p_hs_prok_suf1.fastq && cat Unp_hs_prok.dedup.dedup | perl -pe 's/^(\@A0.+)$/$1\/1/' >> R1p_hs_prok_suf1.fastq && 
+cat R2_hs_prok.dedup.dedup | perl -pe 's/^(\@A0.+)$/$1\/2/' > R2p_hs_prok_suf2.fastq &&
+gzip *.dedup 
+
+#had an issue with trinity readding the headers (maybe because they are not poly A)
+#got command to add suffixes 
+awk '{if (NR%4 == 1) print $1 "/1"; else print $0;}' R1p_hs_prok_suf1.fastq > reads_1.fastq.corrected
+awk '{if (NR%4 == 1) print $1 "/2"; else print $0;}' R2p_hs_prok_suf2.fastq > reads_2.fastq.corrected
+
+Trinity --seqType fq --max_memory 28G --left reads_1.fastq.corrected --right reads_2.fastq.corrected --SS_lib_type RF --CPU 7 --output hs_prok_trinity > hs_trinity_prok.log
+
+#worked locally on nanopore
+hs_prok_Trinity.fasta
+-------------------------
+164799 sequences.
+777 average length.
+125509 maximum length.
+181 minimum length.
+N50 = 1289
+128.1 Mb altogether (128093806 bp).
+0 ambiguous Mb. (0 bp, 0%)
+0 Mb of Ns. (0 bp, 0%)
+-------------------------
+
+#set up for removing contamination
+makeblastdb -in hs_prok_Trinity.fasta -dbtype nucl
+blastn -query SILVA_138.1_SSURef_NR99_tax_silva.fasta -db hs_prok_Trinity.fasta  -num_threads 6 -evalue 1 -num_descriptions 1 -num_alignments 1 -out tq.br
+
+
+/media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/es_prok/
+
+#remove rRNA contamination 
+perl /mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/transcriptome_utilities/RemoveContamSeq.pl type=blastn score=45 reads=hs_prok_Trinity.fasta contam=rRNA, /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/es_prok/SILVA_138.1_SSURef_NR99_tax_silva.fasta table=rRNA_match.txt passed=hs_prok_Trinity_no_rRNA.fasta &&
+#remove contamination from the SPONGE (switched order of targets from euk references )
+perl /mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/transcriptome_utilities/CompareContamSeq3.pl hs_prok_Trinity_no_rRNA.fasta 45 /mnt/nanopore/Transcriptomics/Lough_Hyne/microbe_proteins.faa /mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/aqu_proteins-truncated.fasta
+
+#164387 sequences input.
+# of these matched microbe_proteins.faa more closely than any contaminants.
+#67281 matched contaminants more closely than microbe_proteins.faa.
+#97106 matched none of the supplied DB (nomatch.screened.fasta).
+
+#check numbers of seqs 
+cat aqu_proteins-truncated.screened.fasta | grep '>' | wc -l &&
+#49704
+cat microbe_proteins.screened.fasta | grep '>' | wc -l &&
+#17525
+cat nomatch.screened.fasta | grep '>' | wc -l
+#97106
+
+#worked :) 
+
+#put desired sequences together 
+cat microbe_proteins.screened.fasta nomatch.screened.fasta > hs_prok.screened.fasta
+
+#remove matches to euk (sponge) transcriptome
+makeblastdb -in hs_iso_filtered.fasta -dbtype nucl &&
+blastn -query hs_prok.screened.fasta -db hs_iso_filtered.fasta -evalue 0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001 -num_threads 4 -num_descriptions 1 -num_alignments 1 -out hs_prok_to_euk.br -outfmt 6 &&
+awk '$3==100 && $4>200 {print}' hs_prok_to_euk.br > hs_prok_to_euk_filtered.br &&
+cat hs_prok_to_euk_filtered.br | wc -l &&
+#6750 contigs matched to euk final assembly
+#get just list of contigs
+cat hs_prok_to_euk_filtered.br | cut -f 1 > hs_prok_to_euk_removed_contigs.tab &&
+cat hs_prok_to_euk_removed_contigs.tab |sort  -u |  wc -l &&
+#6719 unique contigs match with euk assembly
+#remove contigs from fasta
+/mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/bbmap/filterbyname.sh in=hs_prok.screened.fasta out=hs_prok_no_euk_screened.fasta names=hs_prok_to_euk_removed_contigs.tab include=f ow=t &&
+seq_stats.pl hs_prok.screened.fasta &&
+seq_stats.pl hs_prok_no_euk_screened.fasta
+
+hs_prok.screened.fasta
+-------------------------
+114631 sequences.
+532 average length.
+31831 maximum length.
+181 minimum length.
+N50 = 623
+61 Mb altogether (60951153 bp).
+0 ambiguous Mb. (0 bp, 0%)
+0 Mb of Ns. (0 bp, 0%)
+-------------------------
+
+
+hs_prok_no_euk_screened.fasta
+-------------------------
+107915 sequences.
+531 average length.
+31831 maximum length.
+181 minimum length.
+N50 = 625
+57.3 Mb altogether (57292552 bp).
+0 ambiguous Mb. (0 bp, 0%)
+0 Mb of Ns. (0 bp, 0%)
+-------------------------
+
+#remove any cross contamination 
+
+makeblastdb -in es_prok_no_euk_screened.fasta -dbtype nucl &&
+blastn -query hs_prok_no_euk_screened.fasta -db es_prok_no_euk_screened.fasta -evalue 0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001 -num_threads 4 -num_descriptions 1 -num_alignments 1 -out hs_to_es_prok.br -outfmt 6 &&
+awk '$3==100 && $4>200 {print}' hs_to_es_prok.br > hs_to_es_prok_filtered.br &&
+cat hs_to_es_prok_filtered.br | wc -l &&
+#444 contigs matched to euk final assembly
+#get just list of contigs
+cat hs_to_es_prok_filtered.br | cut -f 1 > hs_prok_to_es_removed_contigs.tab &&
+cat hs_prok_to_es_removed_contigs.tab |sort  -u |  wc -l &&
+#443 unique contigs match with euk assembly
+#remove contigs from fasta
+/mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/bbmap/filterbyname.sh in=hs_prok_no_euk_screened.fasta out=hs_prok_filtered.fasta names=hs_prok_to_es_removed_contigs.tab include=f ow=t &&
+seq_stats.pl hs_prok_no_euk_screened.fasta &&
+seq_stats.pl hs_prok_filtered.fasta
+
+hs_prok_no_euk_screened.fasta
+-------------------------
+107915 sequences.
+531 average length.
+31831 maximum length.
+181 minimum length.
+N50 = 625
+57.3 Mb altogether (57292552 bp).
+0 ambiguous Mb. (0 bp, 0%)
+0 Mb of Ns. (0 bp, 0%)
+-------------------------
+
+hs_prok_filtered.fasta
+-------------------------
+107472 sequences.
+531 average length.
+31831 maximum length.
+181 minimum length.
+N50 = 626
+57.1 Mb altogether (57066709 bp).
+0 ambiguous Mb. (0 bp, 0%)
+0 Mb of Ns. (0 bp, 0%)
+-------------------------
+
+blastx -query hs_prok_filtered.fasta -db /mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/cart_unstranded_final/uniprot_sprot.fasta -evalue 0.0001 -num_threads 7 -num_descriptions 5 -num_alignments 5 -out hs_prok_filtered.fasta.br 
+
+#extracted coding regions
+CDS_extractor_v2.pl hs_prok_filtered.fasta hs_prok_filtered.fasta.br allhits bridgegaps
+
+#subitted *_PRO.fas (protein file) to eggnog emapper http://eggnog-mapper.embl.de/
+
+#double check for no euk annotations
+grep 'Eukaryota\|Opisthokonta\|Fungi\|Ascomycota\|Sordariomycetes\|Hypocreales\|Nectriaceae\|Hypocreaceae\|Clavicipitaceae\|Glomerellales\|Magnaporthales\|Sordariles\|Sordariaceae\|Chartominaceae\|Ophiostomatales\|Leotiomycetes\|Euroiomycetes\|Onygenales\|Arthrodermataceae\|Eurotiales\|Chaetothyriomycetidae\|Dothideomycetes\|Dothideomycetidae\|Pleosporales\|Saccharomycetes\|Saccharomycetaceae\|Debaryomycetaceae\|Taphrinomycontina\|Basidiomycota\|Pucciniomycotina\|Agaricomycetes\|Agaricomycetes incertae sedis\|Agaricales\|Tremellales\|Ustilaginomycotina\|Fungi incertae sedis\|Metazoa\|Bilateria\|Nematoda\|Chromadorea\|Rhabditida\|Arthropoda\|Insecta\|Diptera\|Nematocera\|Drosophilidae\|Hymenoptera\|Lepidoptera\|Paraneoptera\|Chordata\|Verbrata\|Actinopterygii\|Mammalia\|Afrotheria\|Carnivora\|Chiroptera\|Cetartiodactyla\|Euarchontoglires\|Primates\|Cercopithecoidea\|Hominidae\|Rodentia\|Metatheria\|Testudines\|Aves\|Apicomplexa\|Aconoidasida\|Haemosporida\|Piroplsmida\|Coccidia\|Sarcocystidae\|Ciliophora\|Pythiales\|Peronosporales\|Bacillariophyta\|Viridiplantae\|Streptophyta\|Liliopsida\|Poales\|asterids\|fabids\|Brassicales\|Chlororphyta\|Amoebozoa\|Kinetoplastida' hs_prok_query_seqs.fa.emapper.annotations > hs_prok_eukaryota_all_annotations.tab &&
+grep 'Bacteria\|Proteobacteria\|Gammaproteobacteria\|Alteromonadales genera incertae sedis\|Alteromonadaceae\|Pseudoalteromonadaceae\|Colwelliaceae\|Shewanellaceae\|Idiomarinaceae\|Psychromonadaceae\|unclassified Gammaproteobacteria\|Chromatiales\|Xanthomonadales\|Methylococcales\|Oceanospirillales\|Vibrionales\|Aeromonadales\|Pasteurellales\|Moraxellaceae\|Pseudomonas aeruginosa group\|Pseudomonas putida group\|Pseudomonas stutzeri group\|Pseudomonas fluorescens group\|Pseudomonas syringae group\|Pantoea\|Erwinia\|Tatumella\|Buchnera\|Citrobacter\|Enterobacter\|Escherichia\|Salmonella\|unclassified Enterobacteriaceae\|Proteus\|Providencia\|Serratia\|Yersinia\|Rahnella\|Dickeya\|Pectobacterium\|Thiotrichales\|Legionellales\|Cellvibrio\|Alphaproteobacteria\|Hyphomonadaceae\|Paracoccus\|Roseovarius\|Roseobacter\|Oceanicola\|Thioclava\|Leisingera\|Ruegeria\|Sulfitobacter\|Rhodobacter\|Rhodovulum\|Phaeobacter\|Loktanella\|unclassified Rhodobacteraceae\|Roseivivax\|Xanthobacteraceae\|Brucellaceae\|Rhizobiaceae\|Rhodobiaceae\|Methylobacteriaceae\|Bradyrhizobiaceae\|Hyphomicrobiaceae\|Beijerinckiaceae\|Bartonellaceae\|Mythylocystaceae\|Aurantimonadaceae\|Phyllobacteriaceae\|unclassified Alphaproteobacteria\|Rickettsiales\|Rhodospirillales\|Sphingomonadales\|Caulobacterales\|delta/epsilon subdivisions\|Deltaproteobacteria\|Myxococcales\|Desulfurellales\|Desulfovibrionales\|Desulfobacterales\|Syntrophobacterales\|Desulfobacterales\|Desulfuromonadales\|Epsilonproteobacteria\|Betaproteobacteria\|Burkhholderiaceae\|unclassified Burkholderiales\|Alcaligenaceae\|Comamonadaceae\|Sutterellaceae\|Oxalobacteraceae\|unclassified Betaproteobacteria\|Nitrosomonadales\|Neisseriales\|Rhodocyclales\|Hydrogenophilales\|Bdellovibrionales\|Acidithiobacillales\|Actinobacteria\|Mycobacteriaceae\|Nocardiaceae\|Gordoniaceae\|Corynebacteriaceae\|unclassified Actinobacteria _class_\|Bifidobacteriales\|Micromonosporales\|Propionibacteriales\|Pseudonocardiales\|Streptosporangiales\|Frankiales\|Gylcomycetales\|Cellulomonadaceae\|Promicromonosporaceae\|Dermatophilaceae\|Brevibacteriaceae\|Interasporangiaceae\|Microbacteriaceae\|Micrococcaceae\|Dermacoccaceae\|Actinopolysporales\|Kitasatospora\|Streptacidiphilus\|Streptomyces griseus group\|Acidimicrobiia\|Rubrobacteria\|Coriobacteriia\|Chloroflexi\|Dehalococcoidia\|Chloroflexia\|Thermomicrobia\|Firmicutes\|Clostridia\|Thermoanaerobacterales\|Halanaerobiales\|Clostridiales incertae sedis\|Peptostreptococcaceae\|Peptococcaceae\|unclassified Lachinospiraceae\|Butyrivibrio\|Dorea\|Blautia\|Pseudobutyrivibrio\|Lachnoclostridium\|Lachnoanaerobaculum\|Oribacterium\|Eubacteriaceae\|unclassified Clostridiales\|Syntrophomonadaceae\|Clostridiaceae\|Oscillospiraceae\|Ruminococcaceae\|Erysipelotrichia\|Bacilli\|Geobacillus\|Oceanobacillus\|Virgibacillus\|Halobacillus\|Gracillibacillus\|Anoxybacillus\|Lysinibacillus\|Bacillus\|Pontibacillus\|Bacillales incertae sedis\|Listeriaceae\|Sporolactobacillaceae\|Paenibacillaceae\|Planococcaceae\|Alicyclobacillaceae\|Thermoactinomycetaceae\|Staphylococcaceae\|Carnobacteriaceae\|Aerococcaceae\|Streptococcus dysgalactiae group\|Streptococcus oralis\|Streptococcus sanguinis\|Streptococcus infantis\|Streptococcus pneumoniae\|Streptococcus mitis\|Streptococcus anginosus group\|Streptococcus suis\|Lactococcus\|Lactobacillaceae\|Leuconostocaceae\|Enterococcaceae\|Negativicutes\|Peptoniphilaceae\|Deinococcus-Thermus\|Tenericutes\|Cyanobacteria\|Synechococcus\|Cyanobium\|Synechocystis\|Nostocales\|Stigonemataceae\|Pleurocapsales\|Oscillatoriales\|Cyanothece\|Aquificae\|Thermotogae\|Deferribacteres\|Thermosulfobacteria\|unclssified Bacteria\|Bacteroidetes\|Flavobacteriia\|Arenibacter\|Polaribacter\|Chryseobacterium\|Dokdonia\|Nonlabens\|Maribacter\|Flavobacterium\|Gillisia\|Capnocytophaga\|Leeuwenhoekiella\|Myroides\|Aquimarina\|Elizabethkingia\|Psychroflexus\|Cellulophaga\|unclssified Flavobacteriaceae\|Blattabacteriaceae\|Cryomorphaceae\|Cytophagia\|Bacteroidia\|Bacteroidaceae\|Rikenellaceae\|Porphyromonadaceae\|Alloprevotella\|Marinilabiliaceae\|Sphingobacteriia\|Bacteroidetes Order II. Incertae sedis\|Chlorobi\|Gemmatimonadetes\|Acidobacteria\|Acidbacteriia\|Verrucomicrobia\|Verrucomicrobiae\|unclassified Verrucomicrobia\|Opitutae\|Planctomycetes\|Chlamydiae\|Synergistetes\|Spirochaetes\|Nitrospirae\|Fusobacteria\|Archaea\|Euryarchaeota\|Methanobacteria\|unclassified Euryarchaeota\|Methanomicrobia\|Methanococci\|Halobacteria\|Thermoplasmata\|Thermococci\|Archaeoglobi\|Crenarchaeota\|Thaumarchaeota\|Viruses\|Retro-transcribing viruses\|Hepadnaviridae\|Retroviridae\|dsDNA viruses_ no RNA stage\|Ligamenvirales\|Rudiviridae\|Lipothrixviridae\|Caudovirales\|Myoviridae\|Siphoviridae\|Podoviridae\|Fuselloviridae\|Tectiviridae\|Bicaudaviridae\|Herpesvirales\|ssRNA viruses\|ssRNA positive-strand viruses_ no DNA stage\|Nidovirales\|Picornavirales\|Tymovirales\|Leviviridae\|ssRNA negative-strand viruses\|Mononegavirales\|dsRNA viruses\|ssDNA viruses\|Microviridae\|Inoviridae' hs_prok_query_seqs.fa.emapper.annotations > hs_prok_all_prok_annotations.tab
+
+#just read names of Eukaryotic sequences
+cat hs_prok_eukaryota_all_annotations.tab | cut -f 1 > hs_prok_euk_anns.tab &&
+cat hs_prok_euk_anns.tab |  wc -l &&
+cat hs_prok_euk_anns.tab | sort  -u |  wc -l
+#1571 euk annotated contigs to be removed
+#remove contigs from fasta
+/mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/bbmap/filterbyname.sh in=hs_prok_filtered.fasta out=hs_prok_no_euk_anns.fasta names=hs_prok_euk_anns.tab include=f ow=t 
+
+hs_prok_no_euk_anns.fasta
+-------------------------
+105901 sequences.
+527 average length.
+31831 maximum length.
+181 minimum length.75007
+N50 = 616
+55.8 Mb altogether (55798315 bp).
+0 ambiguous Mb. (0 bp, 0%)
+0 Mb of Ns. (0 bp, 0%)
+-------------------------
+
+
+#tabular files 
+#designate isogroups 
+#group sequences by isogroup 'gene' in fasta and tab files 
+grep ">" hs_prok_no_euk_anns.fasta| perl -pe 's/>(TRINITY_DN(\d+_c\d+_g\d+)\S+)/$1\tisogroup$2/' > hs_prok_seq2iso.tab &&
+cat hs_prok_no_euk_anns.fasta | perl -pe 's/>(TRINITY_DN(\d+_c\d+_g\d+)\S+)/>$1 gene=isogroup$2/' > hs_prok_iso_final.fasta
+
+#same number as reads, carried over too much info (length, etc, might cause downstream problems but will leave for now)
+cat es_prok_seq2iso.tab | cut -f 2 | cut -d ' ' -f 1 | sort -u | wc -l
+
+#75007 isogroups (much less than es..., but still more than sponges alone)
+
+#Go terms
+awk -F "\t" 'BEGIN {OFS="\t" }{print $1,$7 }' hs_prok_all_prok_annotations.tab | grep GO | perl -pe 's/,/;/g' >hs_prok_gene2go.tab &&
+cat hs_prok_gene2go.tab | cut -f 1 | sort -u | wc -l
+#Go terms
+awk -F "\t" 'BEGIN {OFS="\t" }{print $1,$7 }' hs_prok_all_prok_annotations.tab | grep GO | perl -pe 's/,/;/g' >hs_prok_gene2go.tab &&
+cat hs_prok_gene2go.tab | cut -f 1 | sort -u | wc -l
+#8683 contigs of 105901 have GOs 8.2%
+
+#isogroups for GO
+cat hs_prok_gene2go.tab | perl -pe 's/(TRINITY_DN(\d+_c\d+_g\d+)\S+)/$1\tisogroup$2/' > hs_prok_isos_gene2go.tab &&
+cat hs_prok_isos_gene2go.tab | cut -f 2 | sort -u | wc -l &&
+#5430 isogroups of 75007 (7.2%) have isogroups 
+#save so there is just one instance of each isogroup to GO term
+cat hs_prok_isos_gene2go.tab | cut -f 2,3 >hs_iso2go1.tab &&
+awk '!seen[$1]++' hs_iso2go1.tab  > hs_prok_iso2go_final.tab &&
+cat hs_prok_iso2go_final.tab | wc -l
+
+###summarizing KOG classes
+#hs
+awk -F "\t" 'BEGIN {OFS="\t" }{print $1,$21 }' hs_prok_all_prok_annotations.tab | grep -Ev "[,#S]" >hs_contig2kogClass1.tab &&
+awk 'BEGIN {FS=OFS="\t"} NR==FNR {a[$1] = $2;next} {print $1,a[$2]}' /mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Cliona/Symbiodinium/kog_classes.txt hs_contig2kogClass1.tab > hs_contig2kogClass2.tab &&
+cat hs_contig2kogClass2.tab | awk '{if ($2!="") print }' > hs_prok_contig2kogClass_final.tab &&
+cat hs_prok_contig2kogClass_final.tab | wc -l
+
+#16564 contigs of 105901 genes have KOG class (15.6%)
+
+#now for isogroups
+cat hs_prok_contig2kogClass_final.tab| perl -pe 's/(TRINITY_DN(\d+_c\d+_g\d+)\S+)/$1\tisogroup$2/' > hs_with_isos_contig2kogClass.tab &&
+cat hs_with_isos_contig2kogClass.tab | cut -f 2,3  >hs_iso2kogClass1.tab &&
+#remove duplicate lists of isogroups (they have the same annotations :) )
+awk '!seen[$1]++' hs_iso2kogClass1.tab  > hs_iso2kogClass_2.tab &&
+#Below keeps only lines with kog annotation (if some are empty)
+cat hs_iso2kogClass_2.tab | awk '{if ($2!="") print }' > hs_prok_iso2kogClass_final.tab &&
+cat hs_prok_iso2kogClass_final.tab | wc -l 
+
+#hs 10617 isogroups of 75007 have kog classes (14.2%) 
+
+#kegg
+fasta2SBH.pl hs_prok_iso_final.fasta > hs_prok_transcriptome_4kegg.fasta
+# use web browser to submit transcriptome_4kegg.fasta file to KEGG's KAAS server ( http://www.genome.jp/kegg/kaas/ )
+# select SBH algorithm, upload nucleotide query, select representative genes for proks
+#check 'nucleotide' on query type
+
+# Once it is done, download the 'text' output from KAAS, name it query.ko (default)
+
+cat query.ko | awk '{if ($2!="") print }' > hs_prok_iso2kegg.tab &&
+cat hs_prok_iso2kegg.tab | cut -f 2 | sort -u | wc -l
+
+#1829 of 75007 isogroups have kegg annotations 2.44 %
+
+##########gene names
+
+awk -F "\t" 'BEGIN {OFS="\t" }{print $1,$6,$22 }' hs_prok_all_prok_annotations.tab | grep -Ev "\tNA" >hs_contig2geneName.tab &&
+#also includes new format of eggnog which separates names and descriptions
+sed 's/\t/ /2' hs_contig2geneName.tab > hs_contig2geneName2.tab &&
+cat hs_contig2geneName2.tab | wc -l &&
+#19427 contigs of 105901 have gene names
+#add in isogroups
+cat hs_contig2geneName2.tab | perl -pe 's/(TRINITY_DN(\d+_c\d+_g\d+)\S+)/$1\tisogroup$2/' > hs_with_isos_contig2geneName.tab &&
+#iso2gene names 
+cat hs_with_isos_contig2geneName.tab| cut -f 2,3  >hs_iso2geneName1.tab &&
+awk '!seen[$1]++' hs_iso2geneName1.tab  > hs_iso2geneName3.tab &&
+cat hs_iso2geneName3.tab | awk '{if ($2!="") print }' > hs_prok_iso2geneName_final.tab
+cat hs_prok_iso2geneName_final.tab | wc -l
+
+#12446 isogroups of 75007 have gene names (16.5%)... maybe eliminating short reads will improve this number? 
+
+#move trimmed files to new folder just to check 
+mv R*7*.trim hs_prok_dge &&
+mv Unp*7*.trim hs_prok_dge
+
+#zip remaining large files in root folder
+
+#####################
+#mitrochondrial gene expression
+#will try from just the total RNA (prok sequences)
+#got mitochondrial genes from assembly following workflow in https://www.sciencedirect.com/science/article/abs/pii/S1055790320302839?via%3Dihub
+##########
+
+#made bowtie database
+bowtie2-build hs_mito_cds.fasta hs_mito_cds.fasta
+
+#dont have isogroups = 'full gene'
+#grep ">" gamma_for_hs.fasta | perl -pe 's/>(TRINITY_DN(\d+_c\d+_g\d+)\S+)/$1\tisogroup$2/' > hs_prok_gamma_seq2iso.tab &&
+
+#made a tab file with the annotions like:
+#nad1	nad1
+
+#mapping and counting 
+bowtie2 --local -x hs_mito_cds.fasta -1 ../seqs/R1_7347_S16_R1_001.trim -2 ../seqs/R2_7347_S16_R2_001.trim -U ../seqs/Unp_7347_S16_R1_001.trim_7347_S16_R2_001.trim -S DC54.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC54.trim.sam hs_mito_cds_seq2iso.tab aligner=bowtie2 >DC54.trim.sam.counts &&
+gzip DC54.trim.sam 
+
+
+###*** rerun cytb, because it 'cytb has no isogroup designation'
+#added some extra stuff after cytb as a workaround
+#had to rerun bowtie database too
+
+bowtie2 --local -x hs_mito_cds.fasta -1 ../seqs/R1_7348_S17_R1_001.trim -2 ../seqs/R2_7348_S17_R2_001.trim -U ../seqs/Unp_7348_S17_R1_001.trim_7348_S17_R2_001.trim -S re_DC55.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl re_DC55.trim.sam hs_mito_cds_seq2iso.tab aligner=bowtie2 >DC55.trim.sam.counts &&
+gzip re_DC55.trim.sam &&
+bowtie2 --local -x hs_mito_cds.fasta -1 ../seqs/R1_7349_S18_R1_001.trim -2 ../seqs/R2_7349_S18_R2_001.trim -U ../seqs/Unp_7349_S18_R1_001.trim_7349_S18_R2_001.trim -S DC105.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC105.trim.sam hs_mito_cds_seq2iso.tab aligner=bowtie2 >DC105.trim.sam.counts &&
+gzip DC105.trim.sam &&
+bowtie2 --local -x hs_mito_cds.fasta -1 ../seqs/R1_7350_S19_R1_001.trim -2 ../seqs/R2_7350_S19_R2_001.trim -U ../seqs/Unp_7350_S19_R1_001.trim_7350_S19_R2_001.trim -S DC107.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC107.trim.sam hs_mito_cds_seq2iso.tab aligner=bowtie2 >DC107.trim.sam.counts &&
+gzip DC107.trim.sam &&
+bowtie2 --local -x hs_mito_cds.fasta -1 ../seqs/R1_7351_S20_R1_001.trim -2 ../seqs/R2_7351_S20_R2_001.trim -U ../seqs/Unp_7351_S20_R1_001.trim_7351_S20_R2_001.trim -S DC129.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC129.trim.sam hs_mito_cds_seq2iso.tab aligner=bowtie2 >DC129.trim.sam.counts &&
+gzip DC129.trim.sam &&
+bowtie2 --local -x hs_mito_cds.fasta -1 ../seqs/R1_7352_S21_R1_001.trim -2 ../seqs/R2_7352_S21_R2_001.trim -U ../seqs/Unp_7352_S21_R1_001.trim_7352_S21_R2_001.trim -S DC133.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC133.trim.sam hs_mito_cds_seq2iso.tab aligner=bowtie2 >DC133.trim.sam.counts &&
+gzip DC133.trim.sam &&
+bowtie2 --local -x hs_mito_cds.fasta -1 ../seqs/R1_7353_S22_R1_001.trim -2 ../seqs/R2_7353_S22_R2_001.trim -U ../seqs/Unp_7353_S22_R1_001.trim_7353_S22_R2_001.trim -S DC121.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC121.trim.sam hs_mito_cds_seq2iso.tab aligner=bowtie2 >DC121.trim.sam.counts &&
+gzip DC121.trim.sam &&
+bowtie2 --local -x hs_mito_cds.fasta -1 ../seqs/R1_7354_S23_R1_001.trim -2 ../seqs/R2_7354_S23_R2_001.trim -U ../seqs/Unp_7354_S23_R1_001.trim_7354_S23_R2_001.trim -S DC_116.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC_116.trim.sam hs_mito_cds_seq2iso.tab aligner=bowtie2 >DC116.trim.sam.counts &&
+gzip DC_116.trim.sam &&
+expression_compiler.pl *.sam.counts > allcounts_hs_prok_mitos_only.txt 
+
+
