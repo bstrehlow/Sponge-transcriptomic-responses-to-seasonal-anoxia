@@ -1,0 +1,501 @@
+########################################################################################################################################
+###metagenome
+#######################################################################################################################################
+#see directory:
+#/media/nanopore/archive/metagenomics_lough_hyne/hymeraphia_DC297_metagenome_m1$ 
+
+#assembled full metagenome 
+~/MEGAHIT-1.2.9-Linux-x86_64-static/bin ./megahit -1 *_R1_001.fastq.gz -2 *_R2_001.fastq.gz --min-count 3 -o hs_sp_D2C97_metagenome_m1 -t 7 -m 0.95 2> hs_sp_D2C97_metagenome_m1.log
+
+
+#used Warren's shiny app to find bins based on coverage and GC content. see https://github.com/wrf/lavaLampPlot
+mv final.contigs.fa hs_sp_D2C97_m1_final.contigs.fa
+python sizecutter.py -a 500 hs_sp_D2C97_m1_final.contigs.fa -p > hs_sp_D2C97_metagenome_m1_final.contigs.a500.fa
+python spadescontigstocovgc.py hs_sp_D2C97_metagenome_m1_final.contigs.a500.fa > hs_sp_D2C97_metagenome_m1_final.contigs.a500.gc_cov.tab
+Rscript /home/astrid/git/contig_gc_coverage.R
+hs_sp_D2C97_metagenome_m1_final.contigs.a500.gc_cov.tab
+
+
+#bin1 = thaumarchaeota symbiont
+
+#see Notes for metagenome analysis in metagenome folder on sharepooint
+
+#isolated contig names
+cut -f 1 bin1_selection_gc25to40.tab > bin1_selection_gc25to40_names.tab
+
+#isolated these contigs from fasta file
+/mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/bbmap/filterbyname.sh in=hymeraphia_DC297_metagenome_m1.final.contigs.a900.fa out=hs_bin1.fasta names=bin1_selection_gc25to40_names.tab include=t ow=t 
+
+#grep '>'  hs_bin1.fasta | wc -l
+785 :) 
+
+makeblastdb -in N_maritimus_genome_GCF_000018465.1_ASM1846v1_genomic.fna -dbtype nucl
+
+
+makeblastdb -in hs_bin1.fasta -dbtype prot
+makeblastdb -in gamma_plus_nitroso_for_Hst.prot.fasta -dbtype prot
+
+check with closely related refrence genomes
+perl /mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/transcriptome_utilities/CompareContamSeq3.pl hs_bin1.fasta 45 /mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/aqu_proteins-truncated.fasta gamma_plus_nitroso_for_Hst.prot.fasta
+
+#785 sequences input.
+#75 of these matched aqu_proteins-truncated.fasta more closely than any contaminants.
+#197 matched contaminants more closely than aqu_proteins-truncated.fasta.
+#513 matched none of the supplied DB (nomatch.screened.fasta).
+
+#nomatch file has duplicates, but tab file is fine. Will get nomatch contigs from bin1 fasta file
+
+grep 'no match' origin_summary.tab > no_match_list.tab
+
+cut -f 1 no_match_list.tab > no_match_list2.tab 
+
+/mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/bbmap/filterbyname.sh in=hs_bin1.fasta out=hs_bin1_no_match_microbes.fasta names=no_match_list2.tab include=t ow=t 
+
+#grep '>' hs_bin1_no_match_microbes.fasta | wc -l
+#513 :)
+
+#microbe file is also messed up (too many contigs
+grep 'gamma' origin_summary.tab > microbe_match_list.tab
+
+cut -f 1 microbe_match_list.tab > microbe_match_list2.tab
+
+/mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/bbmap/filterbyname.sh in=hs_bin1.fasta out=hs_bin1_microbe_match.fasta names=microbe_match_list2.tab include=t ow=t 
+
+#197 :)
+
+#look at bin size for nitro
+seq_stats.pl hs_bin1_microbe_match.fasta
+
+hs_bin1_microbe_match.fasta
+-------------------------
+197 sequences.
+10600 average length.
+38982 maximum length.
+1047 minimum length.
+N50 = 17292
+2.1 Mb altogether (2088125 bp).
+0 ambiguous Mb. (0 bp, 0%)
+0 Mb of Ns. (0 bp, 0%)
+-------------------------
+
+#the N. maritimus genome is 1.6 Mbases, so 2.1 Mb bin should have all of the Hs nitro genome :). Yay!! 
+N_maritimus_genome_GCF_000018465.1_ASM1846v1_genomic.fna
+-------------------------
+1 sequences.
+1645259 average length.
+1645259 maximum length.seq_stats.pl hs_bin1_microbe_match.fasta
+1645259 minimum length.
+N50 = 
+1.6 Mb altogether (1645259 bp).
+0 ambiguous Mb. (0 bp, 0%)
+0 Mb of Ns. (0 bp, 0%)
+-------------------------
+
+#also include nomatch for now
+
+cat hs_bin1_no_match_microbes.fasta hs_bin1_microbe_match.fasta > micro_and_nomatch.fasta &&
+makeblastdb -in micro_and_nomatch.fasta -dbtype prot
+
+#check for contamination from gammas
+perl /mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/transcriptome_utilities/CompareContamSeq3.pl micro_and_nomatch.fasta 45 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/nitroso_for_Hst.prot.fasta /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/gamma_for_hs.fasta
+
+#710 sequences input.
+#196 of these matched nitroso_for_Hst.prot.fasta more closely than any contaminants.
+#0 matched contaminants more closely than nitroso_for_Hst.prot.fasta.
+#514 matched none of the supplied DB (nomatch.screened.fasta).
+
+
+#still messed up in the fastas... I think it might be from running the sript multiple times in the same directory 
+grep 'nitroso' origin_summary.tab > nitroso_match_list.tab &&
+cut -f 1 nitroso_match_list.tab > nitroso_match_list2.tab &&
+/mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/bbmap/filterbyname.sh in=hs_bin1.fasta out=hs_bin1_nitroso_match.fasta names=nitroso_match_list2.tab include=t ow=t 
+
+#also get no match list, maybe use for future reference.
+grep 'no match' origin_summary.tab > nitroso_no_match_list.tab &&
+cut -f 1 nitroso_no_match_list.tab > nitroso_no_match_list2.tab &&
+/mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/bbmap/filterbyname.sh in=hs_bin1.fasta out=hs_bin1_no_match_nitro_or_gamma.fasta names=nitroso_no_match_list2.tab include=t ow=t 
+
+seq_stats.pl hs_bin1_nitroso_match.fasta
+
+hs_bin1_nitroso_match.fasta
+-------------------------
+196 sequences.
+10627 average length.
+38982 maximum length.
+1047 minimum length.
+N50 = 17292
+2.1 Mb altogether (2082851 bp).
+0 ambiguous Mb. (0 bp, 0%)
+0 Mb of Ns. (0 bp, 0%)
+-------------------------
+
+#sent both no match and nitroso match to eggnog for annotation
+#could use annotations from no match to filter out any nitroso (genus) genes from no match
+
+#also proceeded with prodigal annoations
+git clone https://github.com/hyattpd/Prodigal
+
+cd Prodigal/
+
+sudo make install
+
+(in home directory ^)
+
+#see https://github.com/hyattpd/Prodigal
+#adding -d also outputs the DNA sequence of the coding regions :)
+
+prodigal -i hs_bin1_nitroso_match.fasta -o hs_bin1_nitroso_match.genes -a hs_bin1_nitroso_match.proteins.faa -d hs_bin1_nitroso_match.dna.faa -p meta
+
+#numbers match for amount of DNA and protein sequences. 
+
+#wow that was fast! 
+#but what do all the outputs mean, and where are the names of the genes? 
+
+grep '>' hs_bin1_nitroso_match.proteins.faa | wc -l
+#2586 proteins
+
+#how many in N maritimus/ closest reference ?
+grep '>' /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/nitroso_for_Hst.prot.fasta | wc -l
+#1900
+#so at lease we are pretty close :)
+
+#seems that prodigal just finds genes (open reading frames) but does not annotated, and it may be built into prokka, which annotates. 
+
+#used brew to get prokka
+#didnt work first try, but this helped:https://github.com/uber/nanoscope/issues/65
+
+#seems like the command ill just be (once done installing)
+prokka hs_bin1_nitroso_match.fasta
+#installation failed with makeblastdb version 
+
+#upgraded blast
+rpm -Uvh ncbi-blast-2.2.18-1.x86_64.rpm
+#didn't work... too many dependencies... maybe just try prodigal proteins on eggnogg annotator??
+
+#also checked completeness on busco v5 https://gvolante.riken.jp/analysis.html
+#with thaumarchaeota dataset. 
+#did it with the contigs, but seems to have worked anyway :) and genome bin was very complete.
+#Total number of core genes queried	722
+#Number of core genes detected
+#  Complete	707 (97.92%)
+#  Complete + Partial	709 (98.20%)
+
+#compare protein (from prodigal) annotations in emapper to annotations just from the bin 1 fasta sequence. 
+#2586 proteins input.
+#is it possible to mapp to a protein file for the count data? There must be a way to separate out the genome fasta file based on hs_bin1_nitroso_match.geneshs_bin1_nitroso_match.genes... or with the protein file
+
+#emapper from protein (prodigal) file has 1704 genes 
+#emapper from genome fasta has 1728 genes 
+
+
+#make sure there is no euk contamination. 
+/media/nanopore/archive/metagenomics_lough_hyne/hymeraphia_DC297_metagenome_m1/prodigal_proteins_nitroso_emapper
+
+grep 'Eukaryota\|Opisthokonta\|Fungi\|Ascomycota\|Sordariomycetes\|Hypocreales\|Nectriaceae\|Hypocreaceae\|Clavicipitaceae\|Glomerellales\|Magnaporthales\|Sordariles\|Sordariaceae\|Chartominaceae\|Ophiostomatales\|Leotiomycetes\|Euroiomycetes\|Onygenales\|Arthrodermataceae\|Eurotiales\|Chaetothyriomycetidae\|Dothideomycetes\|Dothideomycetidae\|Pleosporales\|Saccharomycetes\|Saccharomycetaceae\|Debaryomycetaceae\|Taphrinomycontina\|Basidiomycota\|Pucciniomycotina\|Agaricomycetes\|Agaricomycetes incertae sedis\|Agaricales\|Tremellales\|Ustilaginomycotina\|Fungi incertae sedis\|Metazoa\|Bilateria\|Nematoda\|Chromadorea\|Rhabditida\|Arthropoda\|Insecta\|Diptera\|Nematocera\|Drosophilidae\|Hymenoptera\|Lepidoptera\|Paraneoptera\|Chordata\|Verbrata\|Actinopterygii\|Mammalia\|Afrotheria\|Carnivora\|Chiroptera\|Cetartiodactyla\|Euarchontoglires\|Primates\|Cercopithecoidea\|Hominidae\|Rodentia\|Metatheria\|Testudines\|Aves\|Apicomplexa\|Aconoidasida\|Haemosporida\|Piroplsmida\|Coccidia\|Sarcocystidae\|Ciliophora\|Pythiales\|Peronosporales\|Bacillariophyta\|Viridiplantae\|Streptophyta\|Liliopsida\|Poales\|asterids\|fabids\|Brassicales\|Chlororphyta\|Amoebozoa\|Kinetoplastida\|Bacteria\|Proteobacteria\|Gammaproteobacteria\|Alteromonadales genera incertae sedis\|Alteromonadaceae\|Pseudoalteromonadaceae\|Colwelliaceae\|Shewanellaceae\|Idiomarinaceae\|Psychromonadaceae\|unclassified Gammaproteobacteria\|Chromatiales\|Xanthomonadales\|Methylococcales\|Oceanospirillales\|Vibrionales\|Aeromonadales\|Pasteurellales\|Moraxellaceae\|Pseudomonas aeruginosa group\|Pseudomonas putida group\|Pseudomonas stutzeri group\|Pseudomonas fluorescens group\|Pseudomonas syringae group\|Pantoea\|Erwinia\|Tatumella\|Buchnera\|Citrobacter\|Enterobacter\|Escherichia\|Salmonella\|unclassified Enterobacteriaceae\|Proteus\|Providencia\|Serratia\|Yersinia\|Rahnella\|Dickeya\|Pectobacterium\|Thiotrichales\|Legionellales\|Cellvibrio\|Alphaproteobacteria\|Hyphomonadaceae\|Paracoccus\|Roseovarius\|Roseobacter\|Oceanicola\|Thioclava\|Leisingera\|Ruegeria\|Sulfitobacter\|Rhodobacter\|Rhodovulum\|Phaeobacter\|Loktanella\|unclassified Rhodobacteraceae\|Roseivivax\|Xanthobacteraceae\|Brucellaceae\|Rhizobiaceae\|Rhodobiaceae\|Methylobacteriaceae\|Bradyrhizobiaceae\|Hyphomicrobiaceae\|Beijerinckiaceae\|Bartonellaceae\|Mythylocystaceae\|Aurantimonadaceae\|Phyllobacteriaceae\|unclassified Alphaproteobacteria\|Rickettsiales\|Rhodospirillales\|Sphingomonadales\|Caulobacterales\|delta/epsilon subdivisions\|Deltaproteobacteria\|Myxococcales\|Desulfurellales\|Desulfovibrionales\|Desulfobacterales\|Syntrophobacterales\|Desulfobacterales\|Desulfuromonadales\|Epsilonproteobacteria\|Betaproteobacteria\|Burkhholderiaceae\|unclassified Burkholderiales\|Alcaligenaceae\|Comamonadaceae\|Sutterellaceae\|Oxalobacteraceae\|unclassified Betaproteobacteria\|Nitrosomonadales\|Neisseriales\|Rhodocyclales\|Hydrogenophilales\|Bdellovibrionales\|Acidithiobacillales\|Actinobacteria\|Mycobacteriaceae\|Nocardiaceae\|Gordoniaceae\|Corynebacteriaceae\|unclassified Actinobacteria _class_\|Bifidobacteriales\|Micromonosporales\|Propionibacteriales\|Pseudonocardiales\|Streptosporangiales\|Frankiales\|Gylcomycetales\|Cellulomonadaceae\|Promicromonosporaceae\|Dermatophilaceae\|Brevibacteriaceae\|Interasporangiaceae\|Microbacteriaceae\|Micrococcaceae\|Dermacoccaceae\|Actinopolysporales\|Kitasatospora\|Streptacidiphilus\|Streptomyces griseus group\|Acidimicrobiia\|Rubrobacteria\|Coriobacteriia\|Chloroflexi\|Dehalococcoidia\|Chloroflexia\|Thermomicrobia\|Firmicutes\|Clostridia\|Thermoanaerobacterales\|Halanaerobiales\|Clostridiales incertae sedis\|Peptostreptococcaceae\|Peptococcaceae\|unclassified Lachinospiraceae\|Butyrivibrio\|Dorea\|Blautia\|Pseudobutyrivibrio\|Lachnoclostridium\|Lachnoanaerobaculum\|Oribacterium\|Eubacteriaceae\|unclassified Clostridiales\|Syntrophomonadaceae\|Clostridiaceae\|Oscillospiraceae\|Ruminococcaceae\|Erysipelotrichia\|Bacilli\|Geobacillus\|Oceanobacillus\|Virgibacillus\|Halobacillus\|Gracillibacillus\|Anoxybacillus\|Lysinibacillus\|Bacillus\|Pontibacillus\|Bacillales incertae sedis\|Listeriaceae\|Sporolactobacillaceae\|Paenibacillaceae\|Planococcaceae\|Alicyclobacillaceae\|Thermoactinomycetaceae\|Staphylococcaceae\|Carnobacteriaceae\|Aerococcaceae\|Streptococcus dysgalactiae group\|Streptococcus oralis\|Streptococcus sanguinis\|Streptococcus infantis\|Streptococcus pneumoniae\|Streptococcus mitis\|Streptococcus anginosus group\|Streptococcus suis\|Lactococcus\|Lactobacillaceae\|Leuconostocaceae\|Enterococcaceae\|Negativicutes\|Peptoniphilaceae\|Deinococcus-Thermus\|Tenericutes\|Cyanobacteria\|Synechococcus\|Cyanobium\|Synechocystis\|Nostocales\|Stigonemataceae\|Pleurocapsales\|Oscillatoriales\|Cyanothece\|Aquificae\|Thermotogae\|Deferribacteres\|Thermosulfobacteria\|unclssified Bacteria\|Bacteroidetes\|Flavobacteriia\|Arenibacter\|Polaribacter\|Chryseobacterium\|Dokdonia\|Nonlabens\|Maribacter\|Flavobacterium\|Gillisia\|Capnocytophaga\|Leeuwenhoekiella\|Myroides\|Aquimarina\|Elizabethkingia\|Psychroflexus\|Cellulophaga\|unclssified Flavobacteriaceae\|Blattabacteriaceae\|Cryomorphaceae\|Cytophagia\|Bacteroidia\|Bacteroidaceae\|Rikenellaceae\|Porphyromonadaceae\|Alloprevotella\|Marinilabiliaceae\|Sphingobacteriia\|Bacteroidetes Order II. Incertae sedis\|Chlorobi\|Gemmatimonadetes\|Acidobacteria\|Acidbacteriia\|Verrucomicrobia\|Verrucomicrobiae\|unclassified Verrucomicrobia\|Opitutae\|Planctomycetes\|Chlamydiae\|Synergistetes\|Spirochaetes\|Nitrospirae\|Fusobacteria\|Euryarchaeota\|Methanobacteria\|unclassified Euryarchaeota\|Methanomicrobia\|Methanococci\|Halobacteria\|Thermoplasmata\|Thermococci\|Archaeoglobi\|Crenarchaeota\|Viruses\|Retro-transcribing viruses\|Hepadnaviridae\|Retroviridae\|dsDNA viruses_ no RNA stage\|Ligamenvirales\|Rudiviridae\|Lipothrixviridae\|Caudovirales\|Myoviridae\|Siphoviridae\|Podoviridae\|Fuselloviridae\|Tectiviridae\|Bicaudaviridae\|Herpesvirales\|ssRNA viruses\|ssRNA positive-strand viruses_ no DNA stage\|Nidovirales\|Picornavirales\|Tymovirales\|Leviviridae\|ssRNA negative-strand viruses\|Mononegavirales\|dsRNA viruses\|ssDNA viruses\|Microviridae\|Inoviridae' out.emapper.annotations > hs_bin1_bad_annotations.tab
+
+#same as above, but kept (Archaea\|, Thaumarchaeota\|) i.e. did not list them
+
+#15 genes were eukaryotic, so I will take them out.
+cat hs_bin1_bad_annotations.tab | cut -f 1 > hs_bin1_bad_anns.tab &&
+cat hs_bin1_bad_anns.tab |  wc -l &&
+cat hs_bin1_bad_anns.tab | sort  -u |  wc -l
+#151 euk annotated contigs to be removed
+#remove contigs from fasta
+/mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/bbmap/filterbyname.sh in=hs_bin1_nitroso_match.dna.fasta out=hs_bin1_no_euk_anns.fasta names=hs_bin1_bad_anns.tab include=f ow=t 
+
+#2435 genes remaining :)
+
+#try to get these into the Matz format to make a count table. https://github.com/z0on/tag-based_RNAseq
+
+
+#will try from just the total RNA (prok sequences)
+##########might need to combine both fasta files beforehand
+
+#made bowtie database
+bowtie2-build hs_bin1_no_euk_anns.fasta hs_bin1_no_euk_anns.fasta
+
+#dont have isogroups = 'full gene'
+#grep ">" hs_bin1_no_euk_anns.fasta | perl -pe 's/>(TRINITY_DN(\d+_c\d+_g\d+)\S+)/$1\tisogroup$2/' > hs_prok_gamma_seq2iso.tab &&
+
+bowtie2 --local -x hs_bin1_no_euk_anns.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7348_S17_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7348_S17_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7348_S17_R1_001.trim_7348_S17_R2_001.trim -S DC55.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+
+#do we even need the tab?
+
+grep ">" hs_bin1_no_euk_anns.fasta >hs_bin1_test.tab
+
+#removed the '>', replaced spaces with tabs 
+cat hs_bin1_test.tab | cut -f 1 > hs_bin1_test2.tab
+
+awk '{ print $1" "$1 }' hs_bin1_test2.tab > hs_bin1_seq2iso.tab
+
+##########
+#count script
+bowtie2 --local -x hs_bin1_no_euk_anns.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7348_S17_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7348_S17_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7348_S17_R1_001.trim_7348_S17_R2_001.trim -S DC55.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC55.trim.sam hs_bin1_seq2iso.tab aligner=bowtie2 >DC55.trim.sam.counts &&
+gzip DC55.trim.sam &&
+bowtie2 --local -x hs_bin1_no_euk_anns.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7347_S16_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7347_S16_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7347_S16_R1_001.trim_7347_S16_R2_001.trim -S DC54.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC54.trim.sam hs_bin1_seq2iso.tab aligner=bowtie2 >DC54.trim.sam.counts &&
+gzip DC54.trim.sam &&
+bowtie2 --local -x hs_bin1_no_euk_anns.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7349_S18_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7349_S18_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7349_S18_R1_001.trim_7349_S18_R2_001.trim -S DC105.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC105.trim.sam hs_bin1_seq2iso.tab aligner=bowtie2 >DC105.trim.sam.counts &&
+gzip DC105.trim.sam &&
+bowtie2 --local -x hs_bin1_no_euk_anns.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7350_S19_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7350_S19_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7350_S19_R1_001.trim_7350_S19_R2_001.trim -S DC107.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC107.trim.sam hs_bin1_seq2iso.tab aligner=bowtie2 >DC107.trim.sam.counts &&
+gzip DC107.trim.sam &&
+bowtie2 --local -x hs_bin1_no_euk_anns.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7351_S20_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7351_S20_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7351_S20_R1_001.trim_7351_S20_R2_001.trim -S DC129.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC129.trim.sam hs_bin1_seq2iso.tab aligner=bowtie2 >DC129.trim.sam.counts &&
+gzip DC129.trim.sam &&
+bowtie2 --local -x hs_bin1_no_euk_anns.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7352_S21_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7352_S21_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7352_S21_R1_001.trim_7352_S21_R2_001.trim -S DC133.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC133.trim.sam hs_bin1_seq2iso.tab aligner=bowtie2 >DC133.trim.sam.counts &&
+gzip DC133.trim.sam &&
+bowtie2 --local -x hs_bin1_no_euk_anns.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7353_S22_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7353_S22_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7353_S22_R1_001.trim_7353_S22_R2_001.trim -S DC121.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC121.trim.sam hs_bin1_seq2iso.tab aligner=bowtie2 >DC121.trim.sam.counts &&
+gzip DC121.trim.sam &&
+bowtie2 --local -x hs_bin1_no_euk_anns.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7354_S23_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7354_S23_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7354_S23_R1_001.trim_7354_S23_R2_001.trim -S DC_116.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC_116.trim.sam hs_bin1_seq2iso.tab aligner=bowtie2 >DC116.trim.sam.counts &&
+gzip DC_116.trim.sam &&
+expression_compiler.pl *.sam.counts > allcounts_hs_prok_bin1_only.txt
+
+
+#get updated fasta 
+
+bowtie2 --local -x hs_bin1_no_euk_anns.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7347_S16_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7347_S16_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7347_S16_R1_001.trim_7347_S16_R2_001.trim -S DC54.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC54.trim.sam hs_bin1_seq2iso.tab aligner=bowtie2 >DC54.trim.sam.counts &&
+gzip DC54.trim.sam &&
+bowtie2 --local -x hs_bin1_no_euk_anns.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7349_S18_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7349_S18_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7349_S18_R1_001.trim_7349_S18_R2_001.trim -S DC105.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC105.trim.sam hs_bin1_seq2iso.tab aligner=bowtie2 >DC105.trim.sam.counts &&
+gzip DC105.trim.sam &&
+bowtie2 --local -x hs_bin1_no_euk_anns.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7350_S19_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7350_S19_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7350_S19_R1_001.trim_7350_S19_R2_001.trim -S DC107.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC107.trim.sam hs_bin1_seq2iso.tab aligner=bowtie2 >DC107.trim.sam.counts &&
+gzip DC107.trim.sam &&
+bowtie2 --local -x hs_bin1_no_euk_anns.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7351_S20_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7351_S20_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7351_S20_R1_001.trim_7351_S20_R2_001.trim -S DC129.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC129.trim.sam hs_bin1_seq2iso.tab aligner=bowtie2 >DC129.trim.sam.counts &&
+gzip DC129.trim.sam &&
+bowtie2 --local -x hs_bin1_no_euk_anns.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7352_S21_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7352_S21_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7352_S21_R1_001.trim_7352_S21_R2_001.trim -S DC133.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC133.trim.sam hs_bin1_seq2iso.tab aligner=bowtie2 >DC133.trim.sam.counts &&
+gzip DC133.trim.sam &&
+bowtie2 --local -x hs_bin1_no_euk_anns.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7353_S22_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7353_S22_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7353_S22_R1_001.trim_7353_S22_R2_001.trim -S DC121.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC121.trim.sam hs_bin1_seq2iso.tab aligner=bowtie2 >DC121.trim.sam.counts &&
+gzip DC121.trim.sam &&
+bowtie2 --local -x hs_bin1_no_euk_anns.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7354_S23_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7354_S23_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7354_S23_R1_001.trim_7354_S23_R2_001.trim -S DC_116.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC_116.trim.sam hs_bin1_seq2iso.tab aligner=bowtie2 >DC116.trim.sam.counts &&
+gzip DC_116.trim.sam &&
+expression_compiler.pl *.sam.counts > allcounts_hs_prok_bin1_only.txt
+
+#take that from previously filtered fasta
+
+#also includes new format of eggnog which separates names and descriptions
+#tab of gene names 
+##########gene names
+
+awk -F "\t" 'BEGIN {OFS="\t" }{print $1,$8 }' out.emapper.annotations | grep -Ev "\tNA" >hs_bin1_contig2geneName.tab
+#removed header and footer manually
+#seemes to have worked, but may take some tweaking in R scripts.
+
+###############################
+#tabular files for hs_bin1 
+################################
+/media/nanopore/archive/metagenomics_lough_hyne/hymeraphia_DC297_metagenome_m1/prodigal_proteins_nitroso_emapper
+#Go terms
+awk -F "\t" 'BEGIN {OFS="\t" }{print $1,$10 }' out.emapper.annotations | grep GO | perl -pe 's/,/;/g' >hs_bin1_nitroso_contig2go.tab &&
+cat hs_bin1_nitroso_contig2go.tab | cut -f 1 | sort -u | wc -l
+#19 contigs have go terms (note: not all of these annotations are in the final transcriptome.)
+
+
+
+###summarizing COG classes **** KOGS are only for eukaryotes
+#hs
+awk -F "\t" 'BEGIN {OFS="\t" }{print $1,$7 }' out.emapper.annotations | grep -Ev "[,#S]" >hs_contig2kogClass1.tab &&
+awk 'BEGIN {FS=OFS="\t"} NR==FNR {a[$1] = $2;next} {print $1,a[$2]}' /mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Cliona/Symbiodinium/kog_classes.txt hs_contig2kogClass1.tab > hs_contig2kogClass2.tab &&
+cat hs_contig2kogClass2.tab | awk '{if ($2!="") print }' > hs_bin1_nitroso_contig2kogClass_final.tab &&
+cat hs_bin1_nitroso_contig2kogClass_final.tab | wc -l
+#1097 annotated contigs have KOG class
+
+
+#kegg
+###eggnogg also has various options with kegg, which one though????
+
+awk -F "\t" 'BEGIN {OFS="\t" }{print $1,$12 }' out.emapper.annotations | grep ko > hs_bin1_nitroso_contig2kegg.tab
+
+#remvoe ko: with control H
+
+
+####################################################################################################################################
+#gamma metagenome
+###################################################################################################################################
+#/media/nanopore/archive/metagenomics_lough_hyne/hymeraphia_DC297_metagenome_m1/bin2 
+
+#used Warren's shiny app to find bins based on coverage and GC content. 
+#bin2- hopefully gammaproteobacteria 
+
+#took two grabs (bins) to make bin 2 for gammaproteobacteria. GC from 55 to 70%
+bin2_selection.tab 
+
+#make sure I did not take the same one twice
+#2354 contigs selected
+
+cat bin2_selection.tab | cut -f 1 > bin2_selection_contigs.tab &&
+cat bin2_selection_contigs.tab | sort  -u > bin2_selection_unique.tab &&
+cat bin2_selection_unique.tab |  wc -l
+
+#added one contig repeat to make sure it worked, and it did, they were just all unique
+#2354 contigs
+
+hs_bin2.fasta
+
+#use metagenomic data - eggnog does prodigal for you 
+#nvm, too much data 
+use prodigal
+
+prodigal -i hs_bin2.fasta -o hs_bin2.genes -a hs_bin2.faa -d hs_bin2.dna -p meta
+
+#uploaded just the .faa to eggnogg
+
+#get only the gammaproteobacteria annotations
+#need to also keep the things without annotations.
+
+##'good annotations' just to check
+grep 'Gammaproteobacteria\|Alteromonadales genera incertae sedis\|Alteromonadaceae\|Pseudoalteromonadaceae\|Colwelliaceae\|Shewanellaceae\|Idiomarinaceae\|Psychromonadaceae\|unclassified Gammaproteobacteria\|Chromatiales\|Xanthomonadales\|Methylococcales\|Oceanospirillales\|Vibrionales\|Aeromonadales\|Pasteurellales\|Moraxellaceae\|Pseudomonas aeruginosa group\|Pseudomonas putida group\|Pseudomonas stutzeri group\|Pseudomonas fluorescens group\|Pseudomonas syringae group\|Pantoea\|Erwinia\|Tatumella\|Buchnera\|Citrobacter\|Enterobacter\|Escherichia\|Salmonella\|unclassified Enterobacteriaceae\|Proteus\|Providencia\|Serratia\|Yersinia\|Rahnella\|Dickeya\|Pectobacterium\|Thiotrichales\|Legionellales\|Cellvibrio\|Acidithiobacillales' out.emapper.annotations > hs_bin2_good_annotations.tab
+
+#make annotation list
+awk -F "\t" 'BEGIN {OFS="\t" }{print $1,$8 }' hs_bin2_good_annotations.tab | grep -Ev "\tNA" >hs_bin2_gamma_final_contig2geneName.tab
+
+#note that there seem to be some duplicate annotation. could be multi part protein (or lots of copies of the same gene, but lots of NDH-1. 
+#it's ok because there are 14 subunits to the protein :)
+
+#bd (non gamma annotations)
+grep 'Eukaryota\|Opisthokonta\|Fungi\|Ascomycota\|Sordariomycetes\|Hypocreales\|Nectriaceae\|Hypocreaceae\|Clavicipitaceae\|Glomerellales\|Magnaporthales\|Sordariles\|Sordariaceae\|Chartominaceae\|Ophiostomatales\|Leotiomycetes\|Euroiomycetes\|Onygenales\|Arthrodermataceae\|Eurotiales\|Chaetothyriomycetidae\|Dothideomycetes\|Dothideomycetidae\|Pleosporales\|Saccharomycetes\|Saccharomycetaceae\|Debaryomycetaceae\|Taphrinomycontina\|Basidiomycota\|Pucciniomycotina\|Agaricomycetes\|Agaricomycetes incertae sedis\|Agaricales\|Tremellales\|Ustilaginomycotina\|Fungi incertae sedis\|Metazoa\|Bilateria\|Nematoda\|Chromadorea\|Rhabditida\|Arthropoda\|Insecta\|Diptera\|Nematocera\|Drosophilidae\|Hymenoptera\|Lepidoptera\|Paraneoptera\|Chordata\|Verbrata\|Actinopterygii\|Mammalia\|Afrotheria\|Carnivora\|Chiroptera\|Cetartiodactyla\|Euarchontoglires\|Primates\|Cercopithecoidea\|Hominidae\|Rodentia\|Metatheria\|Testudines\|Aves\|Apicomplexa\|Aconoidasida\|Haemosporida\|Piroplsmida\|Coccidia\|Sarcocystidae\|Ciliophora\|Pythiales\|Peronosporales\|Bacillariophyta\|Viridiplantae\|Streptophyta\|Liliopsida\|Poales\|asterids\|fabids\|Brassicales\|Chlororphyta\|Amoebozoa\|Kinetoplastida\|Alphaproteobacteria\|Hyphomonadaceae\|Paracoccus\|Roseovarius\|Roseobacter\|Oceanicola\|Thioclava\|Leisingera\|Ruegeria\|Sulfitobacter\|Rhodobacter\|Rhodovulum\|Phaeobacter\|Loktanella\|unclassified Rhodobacteraceae\|Roseivivax\|Xanthobacteraceae\|Brucellaceae\|Rhizobiaceae\|Rhodobiaceae\|Methylobacteriaceae\|Bradyrhizobiaceae\|Hyphomicrobiaceae\|Beijerinckiaceae\|Bartonellaceae\|Mythylocystaceae\|Aurantimonadaceae\|Phyllobacteriaceae\|unclassified Alphaproteobacteria\|Rickettsiales\|Rhodospirillales\|Sphingomonadales\|Caulobacterales\|delta/epsilon subdivisions\|Deltaproteobacteria\|Myxococcales\|Desulfurellales\|Desulfovibrionales\|Desulfobacterales\|Syntrophobacterales\|Desulfobacterales\|Desulfuromonadales\|Epsilonproteobacteria\|Betaproteobacteria\|Burkhholderiaceae\|unclassified Burkholderiales\|Alcaligenaceae\|Comamonadaceae\|Sutterellaceae\|Oxalobacteraceae\|unclassified Betaproteobacteria\|Nitrosomonadales\|Neisseriales\|Rhodocyclales\|Hydrogenophilales\|Bdellovibrionales\|Actinobacteria\|Mycobacteriaceae\|Nocardiaceae\|Gordoniaceae\|Corynebacteriaceae\|unclassified Actinobacteria _class_\|Bifidobacteriales\|Micromonosporales\|Propionibacteriales\|Pseudonocardiales\|Streptosporangiales\|Frankiales\|Gylcomycetales\|Cellulomonadaceae\|Promicromonosporaceae\|Dermatophilaceae\|Brevibacteriaceae\|Interasporangiaceae\|Microbacteriaceae\|Micrococcaceae\|Dermacoccaceae\|Actinopolysporales\|Kitasatospora\|Streptacidiphilus\|Streptomyces griseus group\|Acidimicrobiia\|Rubrobacteria\|Coriobacteriia\|Chloroflexi\|Dehalococcoidia\|Chloroflexia\|Thermomicrobia\|Firmicutes\|Clostridia\|Thermoanaerobacterales\|Halanaerobiales\|Clostridiales incertae sedis\|Peptostreptococcaceae\|Peptococcaceae\|unclassified Lachinospiraceae\|Butyrivibrio\|Dorea\|Blautia\|Pseudobutyrivibrio\|Lachnoclostridium\|Lachnoanaerobaculum\|Oribacterium\|Eubacteriaceae\|unclassified Clostridiales\|Syntrophomonadaceae\|Clostridiaceae\|Oscillospiraceae\|Ruminococcaceae\|Erysipelotrichia\|Bacilli\|Geobacillus\|Oceanobacillus\|Virgibacillus\|Halobacillus\|Gracillibacillus\|Anoxybacillus\|Lysinibacillus\|Bacillus\|Pontibacillus\|Bacillales incertae sedis\|Listeriaceae\|Sporolactobacillaceae\|Paenibacillaceae\|Planococcaceae\|Alicyclobacillaceae\|Thermoactinomycetaceae\|Staphylococcaceae\|Carnobacteriaceae\|Aerococcaceae\|Streptococcus dysgalactiae group\|Streptococcus oralis\|Streptococcus sanguinis\|Streptococcus infantis\|Streptococcus pneumoniae\|Streptococcus mitis\|Streptococcus anginosus group\|Streptococcus suis\|Lactococcus\|Lactobacillaceae\|Leuconostocaceae\|Enterococcaceae\|Negativicutes\|Peptoniphilaceae\|Deinococcus-Thermus\|Tenericutes\|Cyanobacteria\|Synechococcus\|Cyanobium\|Synechocystis\|Nostocales\|Stigonemataceae\|Pleurocapsales\|Oscillatoriales\|Cyanothece\|Aquificae\|Thermotogae\|Deferribacteres\|Thermosulfobacteria\|unclssified Bacteria\|Bacteroidetes\|Flavobacteriia\|Arenibacter\|Polaribacter\|Chryseobacterium\|Dokdonia\|Nonlabens\|Maribacter\|Flavobacterium\|Gillisia\|Capnocytophaga\|Leeuwenhoekiella\|Myroides\|Aquimarina\|Elizabethkingia\|Psychroflexus\|Cellulophaga\|unclssified Flavobacteriaceae\|Blattabacteriaceae\|Cryomorphaceae\|Cytophagia\|Bacteroidia\|Bacteroidaceae\|Rikenellaceae\|Porphyromonadaceae\|Alloprevotella\|Marinilabiliaceae\|Sphingobacteriia\|Bacteroidetes Order II. Incertae sedis\|Chlorobi\|Gemmatimonadetes\|Acidobacteria\|Acidbacteriia\|Verrucomicrobia\|Verrucomicrobiae\|unclassified Verrucomicrobia\|Opitutae\|Planctomycetes\|Chlamydiae\|Synergistetes\|Spirochaetes\|Nitrospirae\|Fusobacteria\|Euryarchaeota\|Methanobacteria\|unclassified Euryarchaeota\|Methanomicrobia\|Methanococci\|Halobacteria\|Thermoplasmata\|Thermococci\|Archaeoglobi\|Crenarchaeota\|Viruses\|Retro-transcribing viruses\|Hepadnaviridae\|Retroviridae\|dsDNA viruses_ no RNA stage\|Ligamenvirales\|Rudiviridae\|Lipothrixviridae\|Caudovirales\|Myoviridae\|Siphoviridae\|Podoviridae\|Fuselloviridae\|Tectiviridae\|Bicaudaviridae\|Herpesvirales\|ssRNA viruses\|ssRNA positive-strand viruses_ no DNA stage\|Nidovirales\|Picornavirales\|Tymovirales\|Leviviridae\|ssRNA negative-strand viruses\|Mononegavirales\|dsRNA viruses\|ssDNA viruses\|Microviridae\|Archaea\|Thaumarchaeota\|Inoviridae' out.emapper.annotations > hs_bin2_bad_annotations.tab
+
+##took out the following line from 'bad annotations', bacause it would also include all gammas!!!
+#|Bacteria\|Proteobacteria
+
+#fasta file for gamma (including the no matches), removing the 'bad contigs
+#extract contigs from the fasta (assembly file)
+
+#format tabular file
+cat hs_bin2_bad_annotations.tab | cut -f 1 > hs_bin2_bad_annotations1.tab &&
+cat hs_bin2_bad_annotations1.tab |  wc -l &&
+cat hs_bin2_bad_annotations1.tab | sort  -u |  wc -l
+#3124 contigs to be removed
+
+#from the .dna file from prodigal!!!!
+
+/mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/bbmap/filterbyname.sh in=hs_bin2.dna.fasta out=hs_bin2_gamma_final.fasta names=hs_bin2_bad_annotations1.tab include=f ow=t
+
+#check with annotaion pileups
+annotationsPileup.pl fasta=hs_bin2_gamma_final.fasta c2i=hs_bin2_gamma_final_contig2geneName.tab >test.fasta
+
+#6107 contigs without isogroup designation:
+
+cat hs_bin2_gamma_final_contig2geneName.tab | wc -l
+#3059 contigs have gamma annotataion
+
+grep '>' hs_bin2_gamma_final.fasta | wc -l
+#9164-3059 = 6105 (probably header) :)
+
+#generate seq2iso
+grep ">" hs_bin2_gamma_final.fasta >hs_bin2_test.tab
+
+#removed the '>', replaced spaces with tabs 
+cat hs_bin2_test.tab | cut -f 1 > hs_bin2_test2.tab
+
+awk '{ print $1" "$1 }' hs_bin2_test2.tab > hs_bin2_seq2iso.tab
+
+#############
+#gamma mapping to bin2 and counting
+
+bowtie2-build hs_bin2_gamma_final.fasta hs_bin2_gamma_final.fasta
+
+bowtie2 --local -x hs_bin2_gamma_final.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7348_S17_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7348_S17_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7348_S17_R1_001.trim_7348_S17_R2_001.trim -S DC55.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC55.trim.sam hs_bin2_seq2iso.tab aligner=bowtie2 >DC55.trim.sam.counts &&
+gzip DC55.trim.sam &&
+bowtie2 --local -x hs_bin2_gamma_final.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7347_S16_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7347_S16_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7347_S16_R1_001.trim_7347_S16_R2_001.trim -S DC54.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC54.trim.sam hs_bin2_seq2iso.tab aligner=bowtie2 >DC54.trim.sam.counts &&
+gzip DC54.trim.sam &&
+bowtie2 --local -x hs_bin2_gamma_final.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7349_S18_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7349_S18_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7349_S18_R1_001.trim_7349_S18_R2_001.trim -S DC105.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC105.trim.sam hs_bin2_seq2iso.tab aligner=bowtie2 >DC105.trim.sam.counts &&
+gzip DC105.trim.sam &&
+bowtie2 --local -x hs_bin2_gamma_final.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7350_S19_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7350_S19_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7350_S19_R1_001.trim_7350_S19_R2_001.trim -S DC107.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC107.trim.sam hs_bin2_seq2iso.tab aligner=bowtie2 >DC107.trim.sam.counts &&
+gzip DC107.trim.sam &&
+bowtie2 --local -x hs_bin2_gamma_final.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7351_S20_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7351_S20_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7351_S20_R1_001.trim_7351_S20_R2_001.trim -S DC129.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC129.trim.sam hs_bin2_seq2iso.tab aligner=bowtie2 >DC129.trim.sam.counts &&
+gzip DC129.trim.sam &&
+bowtie2 --local -x hs_bin2_gamma_final.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7352_S21_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7352_S21_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7352_S21_R1_001.trim_7352_S21_R2_001.trim -S DC133.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC133.trim.sam hs_bin2_seq2iso.tab aligner=bowtie2 >DC133.trim.sam.counts &&
+gzip DC133.trim.sam &&
+bowtie2 --local -x hs_bin2_gamma_final.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7353_S22_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7353_S22_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7353_S22_R1_001.trim_7353_S22_R2_001.trim -S DC121.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC121.trim.sam hs_bin2_seq2iso.tab aligner=bowtie2 >DC121.trim.sam.counts &&
+gzip DC121.trim.sam &&
+bowtie2 --local -x hs_bin2_gamma_final.fasta -1 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R1_7354_S23_R1_001.trim -2 /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/R2_7354_S23_R2_001.trim -U /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/seqs/Unp_7354_S23_R1_001.trim_7354_S23_R2_001.trim -S DC_116.trim.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC_116.trim.sam hs_bin2_seq2iso.tab aligner=bowtie2 >DC116.trim.sam.counts &&
+gzip DC_116.trim.sam &&
+expression_compiler.pl *.sam.counts > allcounts_hs_prok_bin2_only.txt
+
+###############################
+#tabular files for hs_bin1 
+################################
+#Go terms
+awk -F "\t" 'BEGIN {OFS="\t" }{print $1,$10 }' hs_bin2_good_annotations.tab | grep GO | perl -pe 's/,/;/g' >hs_bin2_gammas_contig2go.tab &&
+cat hs_bin2_gammas_contig2go.tab | cut -f 1 | sort -u | wc -l
+#378 contigs have go terms
+
+
+#only get ones with gene names
+cat hs_bin1_contig2geneName.tab | cut -f 1 > hs_bin1_annotated_contigs.tab &&
+grep '-' hs_bin1_contig2geneName.tab | wc -l
+#905
+#includes even in gene names
+#count how many are unique
+grep '-' hs_bin1_contig2geneName.tab | cut -f 2 | sort -u | wc -l
+#404
+
+#501  of 1550 have '-' annotation - 1049 annotated -67.7%
+/mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/bbmap/filterbyname.sh in=hs_bin1_no_euk_anns.fasta out=hs_bin1_nitroso_annotated.fasta names=hs_bin1_annotated_contigs.tab include=t ow=t &&
+/mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/bbmap/stats.sh in=hs_bin1_nitroso_annotated.fasta &&
+seq_stats.pl hs_bin1_nitroso_annotated.fasta
+
+
+#bin 2
+
+#only get ones with gene names
+cat hs_bin2_gamma_final_contig2geneName.tab | cut -f 1 > hs_bin2_gamma_final_contigs.tab &&
+grep '-' hs_bin2_gamma_final_contig2geneName.tab | wc -l &&
+#1340
+grep '-' hs_bin2_gamma_final_contig2geneName.tab | cut -f 2 | sort -u | wc -l
+#876
+
+#464 are gammas with no gene name (-), so 2563 have annotations of 3057 =
+
+/mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/bbmap/filterbyname.sh in=hs_bin2_gamma_final.fasta out=hs_bin2_gamma_final_annotated.fasta names=hs_bin2_gamma_final_contigs.tab include=t ow=t &&
+/mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/bbmap/stats.sh in=hs_bin2_gamma_final_annotated.fasta &&
+seq_stats.pl hs_bin2_gamma_final_annotated.fasta
+
+###summarizing COG classes **** KOGS are only for eukaryotes
+#hs
+awk -F "\t" 'BEGIN {OFS="\t" }{print $1,$7 }' hs_bin2_good_annotations.tab | grep -Ev "[,#S]" >hs_contig2kogClass1.tab &&
+awk 'BEGIN {FS=OFS="\t"} NR==FNR {a[$1] = $2;next} {print $1,a[$2]}' /mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Cliona/Symbiodinium/kog_classes.txt hs_contig2kogClass1.tab > hs_contig2kogClass2.tab &&
+cat hs_contig2kogClass2.tab | awk '{if ($2!="") print }' > hs_bin2_gammas_contig2kogClass_final.tab &&
+cat hs_bin2_gammas_contig2kogClass_final.tab | wc -l
+#2195 annotated contigs have KOG class
+
+
+#kegg
+###eggnogg also has various options with kegg, which one though????
+
+awk -F "\t" 'BEGIN {OFS="\t" }{print $1,$12 }' hs_bin2_good_annotations.tab | grep ko > hs_bin2_gammas_contig2kegg.tab
+
+#remvoe ko: with control H
+
+fasta2SBH.pl hs_prok_iso_final.fasta > hs_prok_transcriptome_4kegg.fasta
+# use web browser to submit transcriptome_4kegg.fasta file to KEGG's KAAS server ( http://www.genome.jp/kegg/kaas/ )
+# select SBH algorithm, upload nucleotide query, select representative genes for proks
+#check 'nucleotide' on query type
+
+# Once it is done, download the 'text' output from KAAS, name it query.ko (default)
+
+cat query.ko | awk '{if ($2!="") print }' > hs_prok_iso2kegg.tab &&
+cat hs_prok_iso2kegg.tab | cut -f 2 | sort -u | wc -l
+
+#1829 of 75007 isogroups have kegg annotations 2.44 %
+
