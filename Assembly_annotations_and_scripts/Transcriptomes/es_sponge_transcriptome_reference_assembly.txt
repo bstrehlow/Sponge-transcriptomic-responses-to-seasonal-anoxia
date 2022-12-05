@@ -1,0 +1,1419 @@
+#Eurypon sp 2  sponge referene assembly with DNA sense and BMB data (all polyA RNA sequences)
+#check md5sums from Ronni at BMB
+
+#field samples data downloaded 
+#/media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/PolyA_RNA/7309_S1_R1_001.fastq.gz
+
+#md5sum for real 
+md5sum 7*.fastq.gz
+
+#compare to list ronni gave -> looks good
+
+#just unzip all poly a files for eukaryotic assemblies
+
+gunzip *.fastq.gz
+
+#fastqc (quality control) check
+#polyA sequences
+/home/nanopore/FastQC/fastqc *.fastq
+
+#all polyA sequences seem to be of good quality except for some issue with the first bases and duplications that will be sorted out in the subsequent steps
+
+#update files to DC name 
+
+#cat all files for eurypon 
+#R1
+cat 7309_S1_R1_001.fastq 7310_S2_R1_001.fastq 7311_S3_R1_001.fastq 7312_S4_R1_001.fastq 7313_S5_R1_001.fastq 7314_S6_R1_001.fastq 7315_S7_R1_001.fastq 7316_S8_R1_001.fastq 7317_S9_R1_001.fastq 7318_S10_R1_001.fastq 7319_S11_R1_001.fastq 7320_S12_R1_001.fastq 7321_S13_R1_001.fastq 7322_S14_R1_001.fastq 7323_S15_R1_001.fastq 6761_S86_R1_001.fastq > es_polya_R1.fastq
+
+#rezip raw file for later use to save space
+
+gzip 7309_S1_R1_001.fastq 7310_S2_R1_001.fastq 7311_S3_R1_001.fastq 7312_S4_R1_001.fastq 7313_S5_R1_001.fastq 7314_S6_R1_001.fastq 7315_S7_R1_001.fastq 7316_S8_R1_001.fastq 7317_S9_R1_001.fastq 7318_S10_R1_001.fastq 7319_S11_R1_001.fastq 7320_S12_R1_001.fastq 7321_S13_R1_001.fastq 7322_S14_R1_001.fastq 7323_S15_R1_001.fastq 6761_S86_R1_001.fastq
+
+#R2
+cat 7309_S1_R2_001.fastq 7310_S2_R2_001.fastq 7311_S3_R2_001.fastq 7312_S4_R2_001.fastq 7313_S5_R2_001.fastq 7314_S6_R2_001.fastq 7315_S7_R2_001.fastq 7316_S8_R2_001.fastq 7317_S9_R2_001.fastq 7318_S10_R2_001.fastq 7319_S11_R2_001.fastq 7320_S12_R2_001.fastq 7321_S13_R2_001.fastq 7322_S14_R2_001.fastq 7323_S15_R2_001.fastq 6761_S86_R2_001.fastq > es_polya_R2.fastq 
+
+#can link zip function with previous using &&
+gzip 7309_S1_R2_001.fastq 7310_S2_R2_001.fastq 7311_S3_R2_001.fastq 7312_S4_R2_001.fastq 7313_S5_R2_001.fastq 7314_S6_R2_001.fastq 7315_S7_R2_001.fastq 7316_S8_R2_001.fastq 7317_S9_R2_001.fastq 7318_S10_R2_001.fastq 7319_S11_R2_001.fastq 7320_S12_R2_001.fastq 7321_S13_R2_001.fastq 7322_S14_R2_001.fastq 7323_S15_R2_001.fastq 6761_S86_R2_001.fastq 
+
+#trim and quality control 
+cat es_polya_R1.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > es_polya_r1.trim
+
+cat es_polya_R2.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > es_polya_r2.trim
+
+#re-pair
+rePair.pl es_ploya_r1.trim es_polya_r2.trim
+
+#process was killed 9/10/20, probably due to memory issues with large dataset... can I run deduplication step first?
+
+#initial dedup
+dedupTranscriptome.pl left=es_ploya_r1.trim right=es_ploya_r2.trim
+#didn't work without rePairing
+
+#job killed because of lack of internal memory
+#split the file by 10
+#splitFasta.pl does not work because it is not a fasta file
+
+split -b 31000000000 es_polya_r2.trim prefix
+
+split -b 31000000000 es_polya_r1.trim prefix
+
+#repair with smalled subset
+rePair.pl es_ploya_r1_3.trim es_polya_r2_3.trim
+
+#for some reason the script cannot open the new files. Will try with the repair function in bbmap 
+/mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/bbmap/repair.sh in=es_polya_r1.trim in2=es_polya_r2.trim out=R1_es_r1.trim out2=R2_es_r2.trim outs=Unp_es_r1.trim_es_r2.trim
+
+#working :), but still ran into a memory issue.. probably due to the high number of unpaired reads accumulating.. Try again with subsets
+
+/mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/bbmap/repair.sh in=es_polya_r1_3.trim in2=es_polya_r2_3.trim out=R1_es_r1_3.trim out2=R2_es_r2_3.trim outs=Unp_es_r1.trim_es_r2_3.trim
+
+#run trimming and repairing steps for each sample? 
+gunzip 7309_S1_R1_001.fastq.gz &&
+gunzip 7309_S1_R2_001.fastq.gz &&
+cat 7309_S1_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7309_S1_R1_001.trim &&
+cat 7309_S1_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7309_S1_R2_001.trim &&
+rePair.pl 7309_S1_R1_001.trim 7309_S1_R2_001.trim
+
+#if this works, add a re-zipping command at the end as well
+
+gzip 7309_S1_R1_001.fastq &&
+gzip 7309_S1_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7309_S1_R1_001.trim right=R2_7309_S1_R2_001.trim unp=Unp_7309_S1_R1_001.trim_7309_S1_R2_001.trim
+
+#7309
+#PAIRED: kept 4842344 out of 15460612
+#UNPAIRED: kept 1025115 out of 5819633
+
+##making an updatable script for each sample 
+
+#sample 7310
+
+gunzip 7310_S2_R1_001.fastq.gz &&
+gunzip 7310_S2_R2_001.fastq.gz &&
+cat 7310_S2_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7310_S2_R1_001.trim &&
+cat 7310_S2_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7310_S2_R2_001.trim &&
+rePair.pl 7310_S2_R1_001.trim 7310_S2_R2_001.trim
+gzip 7310_S2_R1_001.fastq &&
+gzip 7310_S2_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7310_S2_R1_001.trim right=R2_7310_S2_R2_001.trim unp=Unp_7310_S2_R1_001.trim_7310_S2_R2_001.trim 
+
+#ran at 11:25 on 19/10 finished 12:46	
+
+#sample 7311
+
+gunzip 7311_S3_R1_001.fastq.gz &&
+gunzip 7311_S3_R2_001.fastq.gz &&
+cat 7311_S3_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7311_S3_R1_001.trim &&
+cat 7311_S3_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7311_S3_R2_001.trim &&
+rePair.pl 7311_S3_R1_001.trim 7311_S3_R2_001.trim &&
+gzip 7311_S3_R1_001.fastq &&
+gzip 7311_S3_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7311_S3_R1_001.trim right=R2_7311_S3_R2_001.trim unp=Unp_7311_S3_R1_001.trim_7311_S3_R2_001.trim &&
+gunzip 7312_S4_R1_001.fastq.gz &&
+gunzip 7312_S4_R2_001.fastq.gz &&
+cat 7312_S4_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7312_S4_R1_001.trim &&
+cat 7312_S4_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7312_S4_R2_001.trim &&
+rePair.pl 7312_S4_R1_001.trim 7312_S4_R2_001.trim &&
+gzip 7312_S4_R1_001.fastq &&
+gzip 7312_S4_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7312_S4_R1_001.trim right=R2_7312_S4_R2_001.trim && unp=Unp_7312_S4_R1_001.trim_7312_S4_R2_001.trim &&
+gunzip 7313_S5_R1_001.fastq.gz &&
+gunzip 7313_S5_R2_001.fastq.gz &&
+cat 7313_S5_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7313_S5_R1_001.trim &&
+cat 7313_S5_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7313_S5_R2_001.trim &&
+rePair.pl 7313_S5_R1_001.trim 7313_S5_R2_001.trim &&
+gzip 7313_S5_R1_001.fastq &&
+gzip 7313_S5_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7313_S5_R1_001.trim right=R2_7313_S5_R2_001.trim unp=Unp_7313_S5_R1_001.trim_7313_S5_R2_001.trim &&
+gunzip 7314_S6_R1_001.fastq.gz &&
+gunzip 7314_S6_R2_001.fastq.gz &&
+cat 7314_S6_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7314_S6_R1_001.trim &&
+cat 7314_S6_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7314_S6_R2_001.trim &&
+rePair.pl 7314_S6_R1_001.trim 7314_S6_R2_001.trim &&
+gzip 7314_S6_R1_001.fastq &&
+gzip 7314_S6_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7314_S6_R1_001.trim right=R2_7314_S6_R2_001.trim unp=Unp_7314_S6_R1_001.trim_7314_S6_R2_001.trim &&
+gunzip 7315_S7_R1_001.fastq.gz &&
+gunzip 7315_S7_R2_001.fastq.gz &&
+cat 7315_S7_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7315_S7_R1_001.trim &&
+cat 7315_S7_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7315_S7_R2_001.trim &&
+rePair.pl 7315_S7_R1_001.trim 7315_S7_R2_001.trim &&
+gzip 7315_S7_R1_001.fastq &&
+gzip 7315_S7_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7315_S7_R1_001.trim right=R2_7315_S7_R2_001.trim unp=Unp_7315_S7_R1_001.trim_7315_S7_R2_001.trim &&
+gunzip 7316_S8_R1_001.fastq.gz &&
+gunzip 7316_S8_R2_001.fastq.gz &&
+cat 7316_S8_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7316_S8_R1_001.trim &&
+cat 7316_S8_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7316_S8_R2_001.trim &&
+rePair.pl 7316_S8_R1_001.trim 7316_S8_R2_001.trim &&
+gzip 7316_S8_R1_001.fastq &&
+gzip 7316_S8_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7316_S8_R1_001.trim right=R2_7316_S8_R2_001.trim unp=Unp_7316_S8_R1_001.trim_7316_S8_R2_001.trim &&
+gunzip 7317_S9_R1_001.fastq.gz &&
+gunzip 7317_S9_R2_001.fastq.gz &&
+cat 7317_S9_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7317_S9_R1_001.trim &&
+cat 7317_S9_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7317_S9_R2_001.trim &&
+rePair.pl 7317_S9_R1_001.trim 7317_S9_R2_001.trim &&
+gzip 7317_S9_R1_001.fastq &&
+gzip 7317_S9_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7317_S9_R1_001.trim right=R2_7317_S9_R2_001.trim unp=Unp_7317_S9_R1_001.trim_7317_S9_R2_001.trim &&
+gunzip 7318_S10_R1_001.fastq.gz &&
+gunzip 7318_S10_R2_001.fastq.gz &&
+cat 7318_S10_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7318_S10_R1_001.trim &&
+cat 7318_S10_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7318_S10_R2_001.trim &&
+rePair.pl 7318_S10_R1_001.trim 7318_S10_R2_001.trim &&
+gzip 7318_S10_R1_001.fastq &&
+gzip 7318_S10_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7318_S10_R1_001.trim right=R2_7318_S10_R2_001.trim unp=Unp_7318_S10_R1_001.trim_7318_S10_R2_001.trim &&
+gunzip 7319_S11_R1_001.fastq.gz &&
+gunzip 7319_S11_R2_001.fastq.gz &&
+cat 7319_S11_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7319_S11_R1_001.trim &&
+cat 7319_S11_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7319_S11_R2_001.trim &&
+rePair.pl 7319_S11_R1_001.trim 7319_S11_R2_001.trim &&
+gzip 7319_S11_R1_001.fastq &&
+gzip 7319_S11_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7319_S11_R1_001.trim right=R2_7319_S11_R2_001.trim unp=Unp_7319_S11_R1_001.trim_7319_S11_R2_001.trim &&
+gunzip 7320_S12_R1_001.fastq.gz &&
+gunzip 7320_S12_R2_001.fastq.gz &&
+cat 7320_S12_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7320_S12_R1_001.trim &&
+cat 7320_S12_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7320_S12_R2_001.trim &&
+rePair.pl 7320_S12_R1_001.trim 7320_S12_R2_001.trim &&
+gzip 7320_S12_R1_001.fastq &&
+gzip 7320_S12_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7320_S12_R1_001.trim right=R2_7320_S12_R2_001.trim unp=Unp_7320_S12_R1_001.trim_7320_S12_R2_001.trim &&
+gunzip 7321_S13_R1_001.fastq.gz &&
+gunzip 7321_S13_R2_001.fastq.gz &&
+cat 7321_S13_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7321_S13_R1_001.trim &&
+cat 7321_S13_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7321_S13_R2_001.trim &&
+rePair.pl 7321_S13_R1_001.trim 7321_S13_R2_001.trim &&
+gzip 7321_S13_R1_001.fastq &&
+gzip 7321_S13_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7321_S13_R1_001.trim right=R2_7321_S13_R2_001.trim unp=Unp_7321_S13_R1_001.trim_7321_S13_R2_001.trim &&
+gunzip 7322_S14_R1_001.fastq.gz &&
+gunzip 7322_S14_R2_001.fastq.gz &&
+cat 7322_S14_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7322_S14_R1_001.trim &&
+cat 7322_S14_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7322_S14_R2_001.trim &&
+rePair.pl 7322_S14_R1_001.trim 7322_S14_R2_001.trim &&
+gzip 7322_S14_R1_001.fastq &&
+gzip 7322_S14_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7322_S14_R1_001.trim right=R2_7322_S14_R2_001.trim unp=Unp_7322_S14_R1_001.trim_7322_S14_R2_001.trim &&
+gunzip 7323_S15_R1_001.fastq.gz &&
+gunzip 7323_S15_R2_001.fastq.gz &&
+cat 7323_S15_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7323_S15_R1_001.trim &&
+cat 7323_S15_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7323_S15_R2_001.trim &&
+rePair.pl 7323_S15_R1_001.trim 7323_S15_R2_001.trim &&
+gzip 7323_S15_R1_001.fastq &&
+gzip 7323_S15_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_7323_S15_R1_001.trim right=R2_7323_S15_R2_001.trim unp=Unp_7323_S15_R1_001.trim_7323_S15_R2_001.trim &&
+gunzip 6761_S86_R1_001.fastq.gz &&
+gunzip 6761_S86_R2_001.fastq.gz &&
+cat 6761_S86_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 6761_S86_R1_001.trim &&
+cat 6761_S86_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 6761_S86_R2_001.trim &&
+rePair.pl 6761_S86_R1_001.trim 6761_S86_R2_001.trim &&
+gzip 6761_S86_R1_001.fastq &&
+gzip 6761_S86_R2_001.fastq &&
+dedupTranscriptome.pl left=R1_6761_S86_R1_001.trim right=R2_6761_S86_R2_001.trim unp=Unp_6761_S86_R1_001.trim_6761_S86_R2_001.trim
+
+
+#resultant files 
+#7309
+#PAIRED: kept 4842344 out of 15460612
+#UNPAIRED: kept 1025115 out of 5819633
+
+#7310
+#PAIRED: kept 5533982 out of 26719748
+#UNPAIRED: kept 1296686 out of 10488136
+
+#7311
+#PAIRED: kept 7404583 out of 17501523
+#UNPAIRED: kept 1451467 out of 6857163
+
+#7312
+#PAIRED: kept 5164312 out of 11816720
+#UNPAIRED: kept 0 out of 
+
+#just a readout error, file is populated
+
+###what is the issue here?? -probably mistaken entry somewhere
+
+#7313
+#PAIRED: kept 4883868 out of 22548391
+#UNPAIRED: kept 977514 out of 8517872
+
+#7314
+#PAIRED: kept 6687377 out of 38161943
+#UNPAIRED: kept 1243093 out of 14893612
+
+#7315
+#PAIRED: kept 6687377 out of 38161943
+#UNPAIRED: kept 1243093 out of 14893612
+
+#7316
+#PAIRED: kept 6834787 out of 21484783
+#UNPAIRED: kept 1348296 out of 8403506
+
+#7317
+#PAIRED: kept 6952007 out of 22153987
+#UNPAIRED: kept 1352226 out of 8671009
+
+
+#7318
+#PAIRED: kept 5259022 out of 24891945
+#UNPAIRED: kept 1061448 out of 9651418
+
+
+#7319
+#PAIRED: kept 6173721 out of 16420575
+#UNPAIRED: kept 1261809 out of 6396781
+
+#7320
+#PAIRED: kept 6173721 out of 16420575
+#UNPAIRED: kept 1261809 out of 6396781
+
+#7321
+#PAIRED: kept 6077565 out of 19385062
+#UNPAIRED: kept 1293585 out of 7527963
+
+#7322
+#PAIRED: kept 5246036 out of 22081242
+UNPAIRED: kept 1060140 out of 8532022
+
+#7323
+PAIRED: kept 6250869 out of 21400970
+UNPAIRED: kept 1243540 out of 8190070
+
+#6761
+PAIRED: kept 4497803 out of 8409950
+UNPAIRED: kept 972212 out of 3071026
+
+
+#free up space
+
+gzip *.trim
+
+#acutally, just delete these intermediates
+
+rm *.trim
+
+#much faster
+
+#recombine all es
+
+cat R1*.dedup > R1_es_polya.dedup &&
+cat R2*.dedup > R2_es_polya.dedup &&
+cat Unp*.dedup > Unp_es_polya.dedup
+ 
+#deduplicate again
+
+dedupTranscriptome.pl left=R1_es_polya.dedup right=R2_es_polya.dedup unp=Unp_es_polya.dedup
+
+#add suffixes
+cat R1_es_polya.dedup.dedup | perl -pe 's/^(\@A0.+)$/$1\/1/' > R1p_es_polya_suf1.fastq && cat Unp_es_polya.dedup.dedup | perl -pe 's/^(\@A0.+)$/$1\/1/' >> R1p_es_polya_suf1.fastq &&
+cat R2_es_polya.dedup.dedup | perl -pe 's/^(\@A0.+)$/$1\/2/' > R2p_es_polya_suf2.fastq 
+
+#combine with DNA sense reads 
+#if assembly does not work, then try with additional deduplication 
+
+cat /mnt/nanopore/Transcriptomics/Lough_Hyne/Eurypon/es_R1p_suf1.fastq R1p_es_polya_suf1.fastq > R1_es_t.fastq &&
+cat /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/PolyA_RNA/R2p_es_polya_suf2.fastq R2p_es_polya_suf2.fastq > R2_es_t.fastq
+
+
+#assemble with trinity
+Trinity --seqType fq --max_memory 25G --left R1_es_t.fastq --right R2_es_t.fastq --SS_lib_type RF --CPU 6
+
+#memory failed out... so will try additional deduplication
+cat /mnt/nanopore/Transcriptomics/Lough_Hyne/Eurypon/R1_es_r1.trim.dedup R1_es_polya.dedup.dedup > R1_all_es.fastq &&
+cat /mnt/nanopore/Transcriptomics/Lough_Hyne/Eurypon/R2_es_r2.trim.dedup R2_es_polya.dedup.dedup > R2_all_es.fastq &&
+cat Unp_es_polya.dedup /mnt/nanopore/Transcriptomics/Lough_Hyne/Eurypon/Unp_es_r1.trim_es_r2.trim.dedup > Unp_all_es.fastq
+
+dedupTranscriptome.pl left=R1_all_es.fastq right=R2_all_es.fastq unp=Unp_all_es.fastq
+
+#took out very few reads... interesting 
+#PAIRED: kept 55295892 out of 59892850
+#UNPAIRED: kept 8297098 out of 19170740
+
+#added suffices
+cat R1_all_es.fastq.dedup | perl -pe 's/^(\@A0.+)$/$1\/1/' | perl -pe 's/^(\@MG.+)$/$1\/1/' > R1p_es_polya_suf1.fastq && cat Unp_all_es.fastq.dedup | perl -pe 's/^(\@A0.+)$/$1\/1/' | perl -pe 's/^(\@MG.+)$/$1\/1/' >> R1p_es_polya_suf1.fastq &&
+cat R2_all_es.fastq.dedup | perl -pe 's/^(\@A0.+)$/$1\/2/' | perl -pe 's/^(\@MG.+)$/$1\/2/' > R2p_es_polya_suf2.fastq 
+
+#retried assembly
+Trinity --seqType fq --max_memory 28G --left R1p_es_polya_suf1.fastq --right R2p_es_polya_suf2.fastq --SS_lib_type RF --CPU 7
+
+
+#asssembled on Warren's computer 
+~/trinityrnaseq-Trinity-v2.4.0/Trinity --seqType fq --max_memory 40G --left R1p_es_polya_suf1.fastq.gz --right R2p_es_polya_suf2.fastq.gz --SS_lib_type RF --CPU 7 --output eurypon_sp2_trinity > eurypon_sp2_trinity.log
+
+#remove contigs less than 400 bp
+perl /mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/transcriptome_utilities/removesmalls.pl 400 Eurypon_sp2_Trinity.fasta > es_Trinity-l400.fasta
+
+#es
+makeblastdb -in es_Trinity-l400.fasta -dbtype nucl
+
+blastn -query /mnt/nanopore/Transcriptomics/Lough_Hyne/Eurypon/Poriferan_rRNA.fasta -db es_Trinity-l400.fasta  -num_threads 6 -evalue 1 -num_descriptions 1 -num_alignments 1 -out tq.br
+
+#then, work around = run above script using newly created tq.br. 
+perl /mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/transcriptome_utilities/RemoveContamSeq.pl type=blastn score=45 reads=es_Trinity-l400.fasta contam=rRNA, /mnt/nanopore/Transcriptomics/Lough_Hyne/Eurypon/Poriferan_rRNA.fasta table=Poriferan_rRNA_match.txt passed=es_Trinity-l400_no_rRNA.fasta
+
+#ES
+#147165 sequences in input file
+#29 sequences look like contaminants
+#	rRNA	29
+#147136 sequences passed all tests
+
+#seq stats147136
+
+#es_Trinity-l400_no_rRNA.fasta
+-------------------------
+147136 sequences.
+1039 average length.
+18890 maximum length.
+400 minimum length.
+N50 = 1264
+152.8 Mb altogether (152801297 bp).
+0 ambiguous Mb. (0 bp, 0%)
+0 Mb of Ns. (0 bp, 0%)
+-------------------------
+ 
+/mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/bbmap/stats.sh in=es_Trinity-l400_no_rRNA.fasta
+A	C	G	T	N	IUPAC	Other	GC	GC_stdev
+0.2549	0.2479	0.2642	0.2331	0.0000	0.0000	0.0000	0.5120	0.0597
+
+Main genome scaffold total:         	147136
+Main genome contig total:           	147136
+Main genome scaffold sequence total:	152.801 MB
+Main genome contig sequence total:  	152.801 MB  	0.000% gap
+Main genome scaffold N/L50:         	35123/1.263 KB
+Main genome contig N/L50:           	35123/1.263 KB
+Main genome scaffold N/L90:         	113320/509
+Main genome contig N/L90:           	113320/509
+Max scaffold length:                	18.89 KB
+Max contig length:                  	18.89 KB
+Number of scaffolds > 50 KB:        	0
+% main genome in scaffolds > 50 KB: 	0.00%
+
+
+Minimum 	Number        	Number        	Total         	Total         	Scaffold
+Scaffold	of            	of            	Scaffold      	Contig        	Contig  
+Length  	Scaffolds     	Contigs       	Length        	Length        	Coverage
+--------	--------------	--------------	--------------	--------------	--------
+    All 	       147,136	       147,136	   152,801,297	   152,801,297	 100.00%
+    250 	       147,136	       147,136	   152,801,297	   152,801,297	 100.00%
+    500 	       115,546	       115,546	   138,718,787	   138,718,787	 100.00%
+   1 KB 	        49,773	        49,773	    92,913,671	    92,913,671	 100.00%
+ 2.5 KB 	         8,583	         8,583	    30,729,490	    30,729,490	 100.00%
+   5 KB 	           827	           827	     5,395,908	     5,395,908	 100.00%
+  10 KB 	            46	            46	       560,274	       560,274	
+
+#compare to likely contaminates (a thaum proteom and gammaproteobacteria) vs a. queenslandica
+#es
+perl /mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/transcriptome_utilities/CompareContamSeq3.pl es_Trinity-l400_no_rRNA.fasta 45 /mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/aqu_proteins-truncated.fasta /mnt/nanopore/Transcriptomics/Lough_Hyne/microbe_proteins.faa
+
+#es
+#147136 sequences input.
+# of these matched aqu_proteins-truncated.fasta more closely than any contaminants.
+#90414 matched contaminants more closely than aqu_proteins-truncated.fasta.
+#56722 matched none of the supplied DB (nomatch.screened.fasta).
+
+#checked totals 
+cat aqu_proteins-truncated.screened.fasta | grep '>' | wc -l
+#87704
+
+cat microbe_proteins.screened.fasta | grep '>' | wc -l
+#2710
+
+cat nomatch.screened.fasta | grep '>' | wc -l
+
+#56722
+
+cat nomatch.screened.fasta aqu_proteins-truncated.screened.fasta > es.screened.fasta
+
+#then annotation!!! :) using eggnog
+
+#need to separate isogroups, and make sure CDS files have them as well before uploading to eggnogg
+
+#group sequences by isogroup 'gene' in fasta and tab files 
+grep ">" es.screened.fasta | perl -pe 's/>(TRINITY_DN(\d+_c\d+_g\d+)\S+)/$1\tisogroup$2/' > es_seq2iso.tab
+cat es.screened.fasta | perl -pe 's/>(TRINITY_DN(\d+_c\d+_g\d+)\S+)/>$1 gene=isogroup$2/' > es_iso.fasta
+
+#isogroups 
+cat es_seq2iso.tab | cut -f 2 | sort -u | wc -l
+
+#144426
+cat es_seq2iso.tab | cut -f 2 | sort -u | wc -l
+
+#57441
+#for Eurypon 144426 reads in 46505 isogroups
+
+#blasted against uniprot (should take around 10 hours)
+
+blastx -query es.screened.fasta -db /mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/cart_unstranded_final/uniprot_sprot.fasta -evalue 0.0001 -num_threads 8 -num_descriptions 5 -num_alignments 5 -out es.screened.fasta.br
+
+#searched for protein coding regions
+#es
+CDS_extractor_v2.pl es.screened.fasta es.screened.fasta.br allhits bridgegaps
+
+#submitted _PRO.fas file to eggnog http://eggnog-mapper.embl.de/
+
+#annotations
+job_MM_ljurfn6d_annotations.tsv
+
+grep 'Eukaryota\|Opisthokonta\|Fungi\|Ascomycota\|Sordariomycetes\|Hypocreales\|Nectriaceae\|Hypocreaceae\|Clavicipitaceae\|Glomerellales\|Magnaporthales\|Sordariles\|Sordariaceae\|Chartominaceae\|Ophiostomatales\|Leotiomycetes\|Euroiomycetes\|Onygenales\|Arthrodermataceae\|Eurotiales\|Chaetothyriomycetidae\|Dothideomycetes\|Dothideomycetidae\|Pleosporales\|Saccharomycetes\|Saccharomycetaceae\|Debaryomycetaceae\|Taphrinomycontina\|Basidiomycota\|Pucciniomycotina\|Agaricomycetes\|Agaricomycetes incertae sedis\|Agaricales\|Tremellales\|Ustilaginomycotina\|Fungi incertae sedis\|Metazoa\|Bilateria\|Nematoda\|Chromadorea\|Rhabditida\|Arthropoda\|Insecta\|Diptera\|Nematocera\|Drosophilidae\|Hymenoptera\|Lepidoptera\|Paraneoptera\|Chordata\|Verbrata\|Actinopterygii\|Mammalia\|Afrotheria\|Carnivora\|Chiroptera\|Cetartiodactyla\|Euarchontoglires\|Primates\|Cercopithecoidea\|Hominidae\|Rodentia\|Metatheria\|Testudines\|Aves\|Apicomplexa\|Aconoidasida\|Haemosporida\|Piroplsmida\|Coccidia\|Sarcocystidae\|Ciliophora\|Pythiales\|Peronosporales\|Bacillariophyta\|Viridiplantae\|Streptophyta\|Liliopsida\|Poales\|asterids\|fabids\|Brassicales\|Chlororphyta\|Amoebozoa\|Kinetoplastida' job_MM_ljurfn6d_annotations.tsv > es_eukaryota_all_annotations.tab
+
+#just read names of Eukaryotic sequences
+
+cat es_eukaryota_all_annotations.tab | cut -f 1 > es_eukaryota_all.tab
+
+#take prok sequences out of fasta, but need to keep the unannotated sequences as well...
+#there ares some without annotations, but they still have a taxa... so I think this will be fine to take
+
+cat es_eukaryota_all.tab | xargs -n 1 samtools faidx es.screened.fasta > es_iso_euk_only.fasta
+
+#prok sequences
+grep 'Bacteria\|Proteobacteria\|Gammaproteobacteria\|Alteromonadales genera incertae sedis\|Alteromonadaceae\|Pseudoalteromonadaceae\|Colwelliaceae\|Shewanellaceae\|Idiomarinaceae\|Psychromonadaceae\|unclassified Gammaproteobacteria\|Chromatiales\|Xanthomonadales\|Methylococcales\|Oceanospirillales\|Vibrionales\|Aeromonadales\|Pasteurellales\|Moraxellaceae\|Pseudomonas aeruginosa group\|Pseudomonas putida group\|Pseudomonas stutzeri group\|Pseudomonas fluorescens group\|Pseudomonas syringae group\|Pantoea\|Erwinia\|Tatumella\|Buchnera\|Citrobacter\|Enterobacter\|Escherichia\|Salmonella\|unclassified Enterobacteriaceae\|Proteus\|Providencia\|Serratia\|Yersinia\|Rahnella\|Dickeya\|Pectobacterium\|Thiotrichales\|Legionellales\|Cellvibrio\|Alphaproteobacteria\|Hyphomonadaceae\|Paracoccus\|Roseovarius\|Roseobacter\|Oceanicola\|Thioclava\|Leisingera\|Ruegeria\|Sulfitobacter\|Rhodobacter\|Rhodovulum\|Phaeobacter\|Loktanella\|unclassified Rhodobacteraceae\|Roseivivax\|Xanthobacteraceae\|Brucellaceae\|Rhizobiaceae\|Rhodobiaceae\|Methylobacteriaceae\|Bradyrhizobiaceae\|Hyphomicrobiaceae\|Beijerinckiaceae\|Bartonellaceae\|Mythylocystaceae\|Aurantimonadaceae\|Phyllobacteriaceae\|unclassified Alphaproteobacteria\|Rickettsiales\|Rhodospirillales\|Sphingomonadales\|Caulobacterales\|delta/epsilon subdivisions\|Deltaproteobacteria\|Myxococcales\|Desulfurellales\|Desulfovibrionales\|Desulfobacterales\|Syntrophobacterales\|Desulfobacterales\|Desulfuromonadales\|Epsilonproteobacteria\|Betaproteobacteria\|Burkhholderiaceae\|unclassified Burkholderiales\|Alcaligenaceae\|Comamonadaceae\|Sutterellaceae\|Oxalobacteraceae\|unclassified Betaproteobacteria\|Nitrosomonadales\|Neisseriales\|Rhodocyclales\|Hydrogenophilales\|Bdellovibrionales\|Acidithiobacillales\|Actinobacteria\|Mycobacteriaceae\|Nocardiaceae\|Gordoniaceae\|Corynebacteriaceae\|unclassified Actinobacteria _class_\|Bifidobacteriales\|Micromonosporales\|Propionibacteriales\|Pseudonocardiales\|Streptosporangiales\|Frankiales\|Gylcomycetales\|Cellulomonadaceae\|Promicromonosporaceae\|Dermatophilaceae\|Brevibacteriaceae\|Interasporangiaceae\|Microbacteriaceae\|Micrococcaceae\|Dermacoccaceae\|Actinopolysporales\|Kitasatospora\|Streptacidiphilus\|Streptomyces griseus group\|Acidimicrobiia\|Rubrobacteria\|Coriobacteriia\|Chloroflexi\|Dehalococcoidia\|Chloroflexia\|Thermomicrobia\|Firmicutes\|Clostridia\|Thermoanaerobacterales\|Halanaerobiales\|Clostridiales incertae sedis\|Peptostreptococcaceae\|Peptococcaceae\|unclassified Lachinospiraceae\|Butyrivibrio\|Dorea\|Blautia\|Pseudobutyrivibrio\|Lachnoclostridium\|Lachnoanaerobaculum\|Oribacterium\|Eubacteriaceae\|unclassified Clostridiales\|Syntrophomonadaceae\|Clostridiaceae\|Oscillospiraceae\|Ruminococcaceae\|Erysipelotrichia\|Bacilli\|Geobacillus\|Oceanobacillus\|Virgibacillus\|Halobacillus\|Gracillibacillus\|Anoxybacillus\|Lysinibacillus\|Bacillus\|Pontibacillus\|Bacillales incertae sedis\|Listeriaceae\|Sporolactobacillaceae\|Paenibacillaceae\|Planococcaceae\|Alicyclobacillaceae\|Thermoactinomycetaceae\|Staphylococcaceae\|Carnobacteriaceae\|Aerococcaceae\|Streptococcus dysgalactiae group\|Streptococcus oralis\|Streptococcus sanguinis\|Streptococcus infantis\|Streptococcus pneumoniae\|Streptococcus mitis\|Streptococcus anginosus group\|Streptococcus suis\|Lactococcus\|Lactobacillaceae\|Leuconostocaceae\|Enterococcaceae\|Negativicutes\|Peptoniphilaceae\|Deinococcus-Thermus\|Tenericutes\|Cyanobacteria\|Synechococcus\|Cyanobium\|Synechocystis\|Nostocales\|Stigonemataceae\|Pleurocapsales\|Oscillatoriales\|Cyanothece\|Aquificae\|Thermotogae\|Deferribacteres\|Thermosulfobacteria\|unclssified Bacteria\|Bacteroidetes\|Flavobacteriia\|Arenibacter\|Polaribacter\|Chryseobacterium\|Dokdonia\|Nonlabens\|Maribacter\|Flavobacterium\|Gillisia\|Capnocytophaga\|Leeuwenhoekiella\|Myroides\|Aquimarina\|Elizabethkingia\|Psychroflexus\|Cellulophaga\|unclssified Flavobacteriaceae\|Blattabacteriaceae\|Cryomorphaceae\|Cytophagia\|Bacteroidia\|Bacteroidaceae\|Rikenellaceae\|Porphyromonadaceae\|Alloprevotella\|Marinilabiliaceae\|Sphingobacteriia\|Bacteroidetes Order II. Incertae sedis\|Chlorobi\|Gemmatimonadetes\|Acidobacteria\|Acidbacteriia\|Verrucomicrobia\|Verrucomicrobiae\|unclassified Verrucomicrobia\|Opitutae\|Planctomycetes\|Chlamydiae\|Synergistetes\|Spirochaetes\|Nitrospirae\|Fusobacteria\|Archaea\|Euryarchaeota\|Methanobacteria\|unclassified Euryarchaeota\|Methanomicrobia\|Methanococci\|Halobacteria\|Thermoplasmata\|Thermococci\|Archaeoglobi\|Crenarchaeota\|Thaumarchaeota\|Viruses\|Retro-transcribing viruses\|Hepadnaviridae\|Retroviridae\|dsDNA viruses_ no RNA stage\|Ligamenvirales\|Rudiviridae\|Lipothrixviridae\|Caudovirales\|Myoviridae\|Siphoviridae\|Podoviridae\|Fuselloviridae\|Tectiviridae\|Bicaudaviridae\|Herpesvirales\|ssRNA viruses\|ssRNA positive-strand viruses_ no DNA stage\|Nidovirales\|Picornavirales\|Tymovirales\|Leviviridae\|ssRNA negative-strand viruses\|Mononegavirales\|dsRNA viruses\|ssDNA viruses\|Microviridae\|Inoviridae' job_MM_ljurfn6d_annotations.tsv > es_prok_all_annotations.tab
+
+cat es_prok_all_annotations.tab | grep 'TRINITY' | wc -l
+#2863 contigs
+
+#just list of names of prok sequeces
+cat es_prok_all_annotations.tab | cut -f 1 > es_prok_all.tab
+
+#remove prok sequences from fasta 
+awk 'BEGIN{while((getline<"es_prok_all.tab")>0)l[">"$1]=1}/^>/{f=!l[$1]}f' es.screened.fasta  > es_final_transcriptome.fasta
+
+#check sequence number 
+cat es.screened.fasta | grep '>' | wc -l
+#144426 contigs before
+#- 2863 prok contigs =
+
+cat es_final_transcriptome.fasta | grep '>' | wc -l
+#141563 contigs :)
+
+#isogroups for 'final' transcriptome
+
+#group sequences by isogroup 'gene' in fasta and tab files 
+grep ">" es_final_transcriptome.fasta| perl -pe 's/>(TRINITY_DN(\d+_c\d+_g\d+)\S+)/$1\tisogroup$2/' > es_seq2iso.tab
+cat es_final_transcriptome.fasta | perl -pe 's/>(TRINITY_DN(\d+_c\d+_g\d+)\S+)/>$1 gene=isogroup$2/' > es_iso.fasta
+
+#same number as reads, carried over too much info (length, etc, might cause downstream problems but will leave for now)
+cat es_seq2iso.tab | cut -f 2 | cut -d ' ' -f 1 | sort -u | wc -l
+
+#55355 isogroups for es (11,000 more than in single sponge transcriptome
+
+#Go terms
+awk -F "\t" 'BEGIN {OFS="\t" }{print $1,$7 }' es_eukaryota_all_annotations.tab | grep GO | perl -pe 's/,/;/g' >es_gene2go.tab
+
+cat es_gene2go.tab | cut -f 1 | sort -u | wc -l
+
+#44223 contigs of 141563 have go terms (31%)
+
+#isogroups for GO
+cat es_gene2go.tab | perl -pe 's/(TRINITY_DN(\d+_c\d+_g\d+)\S+)/$1\tisogroup$2/' > es_isos_gene2go.tab
+
+cat es_isos_gene2go.tab | cut -f 2 | sort -u | wc -l
+#17249 isogroups of 55355 (31%) have isogroups
+
+#save so there is just one instance of each isogroup to GO term
+cat es_isos_gene2go.tab | cut -f 2,3 >es_iso2go1.tab
+
+awk '!seen[$1]++' es_iso2go1.tab  > es_iso2go_final.tab
+
+cat es_iso2go_final.tab | wc -l
+
+#:) same as unique number of isogroups
+
+###summarizing KOG classes
+#es
+awk -F "\t" 'BEGIN {OFS="\t" }{print $1,$21 }' es_eukaryota_all_annotations.tab | grep -Ev "[,#S]" >es_contig2kogClass1.tab
+
+kog_classes.txt file in the same dir):
+awk 'BEGIN {FS=OFS="\t"} NR==FNR {a[$1] = $2;next} {print $1,a[$2]}' /mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Cliona/Symbiodinium/kog_classes.txt es_contig2kogClass1.tab > es_contig2kogClass2.tab
+
+cat es_contig2kogClass2.tab | awk '{if ($2!="") print }' > es_contig2kogClass_final.tab
+
+cat es_contig2kogClass_final.tab | wc -l
+
+#46007 contigs of 141563 genes have KOG class (32%)
+
+#now for isogroups
+cat es_contig2kogClass_final.tab | perl -pe 's/(TRINITY_DN(\d+_c\d+_g\d+)\S+)/$1\tisogroup$2/' > es_with_isos_contig2kogClass.tab
+
+cat es_with_isos_contig2kogClass.tab | cut -f 2,3  >es_iso2kogClass1.tab
+
+#remove duplicate lists of isogroups (they have the same annotations :) )
+
+awk '!seen[$1]++' es_iso2kogClass1.tab  > es_iso2kogClass_2.tab
+
+#Below keeps only lines with kog annotation (if some are empty)
+
+cat es_iso2kogClass_2.tab | awk '{if ($2!="") print }' > es_iso2kogClass_final.tab
+
+cat es_iso2kogClass_final.tab | wc -l
+
+#es 18224 isogroups of 55355 have kog classes (33%) 
+
+#Kegg
+fasta2SBH.pl es_iso.fasta > es_transcriptome_4kegg.fasta
+
+# use web browser to submit transcriptome_4kegg.fasta file to KEGG's KAAS server ( http://www.genome.jp/kegg/kaas/ )
+# select SBH algorithm, upload nucleotide query, select representative genes for model inverts - Drosophila and C. elegans plus Nvec and Hydra, and tricoplax
+#cin, dme, cel, aqu, tad, hmg, nve
+#check 'nucleotide' on query type
+
+# Once it is done, download the 'text' output from KAAS, name it query.ko (default)
+
+cat query.ko | awk '{if ($2!="") print }' > es_iso2kegg.tab
+
+cat es_iso2kegg.tab | cut -f 2 | sort -u | wc -l
+
+#5228 of 55355 isogroups have kegg annotations 
+
+awk -F "\t" 'BEGIN {OFS="\t" }{print $1,$6,$22 }' es_eukaryota_all_annotations.tab | grep -Ev "\tNA" >es_contig2geneName.tab
+
+#also includes new format of eggnog which separates names and descriptions
+
+sed 's/\t/ /2' es_contig2geneName.tab > es_contig2geneName2.tab
+
+cat es_contig2geneName2.tab | wc -l
+
+#64013 contigs of 141563 have gene names
+
+#add in isogroups
+cat es_contig2geneName2.tab | perl -pe 's/(TRINITY_DN(\d+_c\d+_g\d+)\S+)/$1\tisogroup$2/' > es_with_isos_contig2geneName.tab
+
+#iso2gene names 
+cat es_with_isos_contig2geneName.tab| cut -f 2,3  >es_iso2geneName1.tab 
+
+awk '!seen[$1]++' es_iso2geneName1.tab  > es_iso2geneName3.tab
+
+cat es_iso2geneName3.tab | awk '{if ($2!="") print }' > es_iso2geneName_final.tab
+
+cat es_iso2geneName_final.tab | wc -l
+
+#24087 isogroups of 55355 have gene names 
+
+contiguity.pl hits=es.screened_hits.tab threshold=0.75
+
+#contiguity at 0.75 threshold: 0.34
+
+#final stats 
+#es 
+/mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/bbmap/stats.sh in=es_iso.fasta
+
+A	C	G	T	N	IUPAC	Other	GC	GC_stdev
+0.2561	0.2467	0.2632	0.2339	0.0000	0.0000	0.0000	0.5100	0.0577
+
+Main genome scaffold total:         	141563
+Main genome contig total:           	141563
+Main genome scaffold sequence total:	147.591 MB
+Main genome contig sequence total:  	147.591 MB  	0.000% gap
+Main genome scaffold N/L50:         	33550/1.275 KB
+Main genome contig N/L50:           	33550/1.275 KB
+Main genome scaffold N/L90:         	108888/509
+Main genome contig N/L90:           	108888/509
+Max scaffold length:                	18.89 KB
+Max contig length:                  	18.89 KB
+Number of scaffolds > 50 KB:        	0
+% main genome in scaffolds > 50 KB: 	0.00%
+
+
+Minimum 	Number        	Number        	Total         	Total         	Scaffold
+Scaffold	of            	of            	Scaffold      	Contig        	Contig  
+Length  	Scaffolds     	Contigs       	Length        	Length        	Coverage
+--------	--------------	--------------	--------------	--------------	--------
+    All 	       141,563	       141,563	   147,590,782	   147,590,782	 100.00%
+    250 	       141,563	       141,563	   147,590,782	   147,590,782	 100.00%
+    500 	       111,023	       111,023	   133,977,484	   133,977,484	 100.00%
+   1 KB 	        48,052	        48,052	    90,152,366	    90,152,366	 100.00%
+ 2.5 KB 	         8,454	         8,454	    30,256,160	    30,256,160	 100.00%
+   5 KB 	           811	           811	     5,272,826	     5,272,826	 100.00%
+  10 KB 	            44	            44	       537,322	       537,322
+
+#BUSCO results (gvolante server) metazoan
+#Total number of core genes queried	978
+#Number of core genes detected
+#  Complete	926 (94.68%)
+#  Complete + Partial	947 (96.83%)
+#Number of missing core genes	31 (3.17%)
+#Average number of orthologs per core genes	2.15
+#% of detected core genes that have more than 1 ortholog	71.38
+#Scores in BUSCO format	C:94.7%[S:27.1%,D:67.6%],F:2.1%,M:3.2%
+	
+#potentially interesting genes by annotation keyword name: anae, hif, stress, hsp
+isogroup61918_c0_g1	SDHA anaerobic respiration
+isogroup73376_c2_g2	SDHA anaerobic respiration
+isogroup73376_c4_g1	SDHA anaerobic respiration
+isogroup69495_c0_g2	HIF1AN factor 1 alpha subunit inhibitor
+isogroup76461_c1_g1	 ThiF family
+isogroup50421_c0_g1	WNT16 oxidative stress-induced premature senescence
+isogroup28296_c0_g1	HSPA8 Heat shock cognate 71 kDa protein (+108 hsp proteins)
+
+#need to filter es transcriptome based on matches to hs
+
+#make database 
+makeblastdb -in hs_iso.fasta -dbtype nucl &&
+blastn -query es_iso.fasta -db hs_iso.fasta -evalue 0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001 -num_threads 4 -num_descriptions 1 -num_alignments 1 -out es_prok_to_euk.br -outfmt 6
+
+#selecet 100% matches more than 200 bp long 
+awk '$3==100 && $4>200 {print}' es_prok_to_euk.br > es_to_hs_filtered.br &&
+cat es_to_hs_filtered.br | wc -l
+#5945 contigs match
+
+#get just list of contigs
+cat es_to_hs_filtered.br | cut -f 1 > es_removed_contigs.tab
+cat es_removed_contigs.tab |sort  -u |  wc -l
+#5904 contigs match with hs
+
+#remove contigs from fasta
+/mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/bbmap/filterbyname.sh in=es_iso.fasta out=es_iso_filtered.fasta names=es_removed_contigs.tab include=f ow=t &&
+seq_stats.pl es_iso.fasta &&
+seq_stats.pl es_iso_filtered.fasta
+
+cat es_removed_contigs.tab |sort  -u > es_removed_contigs_u.tab
+
+#update tabular summaries for es 
+#remove info after space in second column
+cat es_seq2iso.tab | awk '{print $1,$2}' > es_seq2iso_final.tab
+
+#space instead of tab now?
+#replaced with ctrl h
+
+awk 'NR==FNR{c[$1]++;next};!c[$1]' es_removed_contigs_u.tab es_seq2iso_final.tab > es_seq2iso_filtered.tab &&
+cat es_seq2iso_filtered.tab | cut -f 2 | sort -u | wc -l
+#how many isogroups?
+#51439 isos in 135659 contigs for es
+
+#list of final isos
+cat es_seq2iso_filtered.tab | cut -f 2 | sort -u > es_unique_isos.tab
+
+#final, filtered GO terms
+awk 'NR==FNR{c[$1]++;next};c[$1]' es_unique_isos.tab es_iso2go_final.tab > es_iso2go_final_filtered.tab &&
+cat es_iso2go_final_filtered.tab | wc -l 
+#15557 isogroups of 51439 (30%) have isogroups for es
+
+#final, filtered gene names list
+
+awk 'NR==FNR{c[$1]++;next};c[$1]' es_unique_isos.tab es_iso2geneName_final.tab > es_iso2geneName_final_filtered.tab &&
+cat es_iso2geneName_final_filtered.tab | wc -l
+#21848 genes have names of 51439 (42%)
+
+#final iso2kegg
+awk 'NR==FNR{c[$1]++;next};c[$1]' es_unique_isos.tab es_iso2kegg.tab > es_iso2kegg_filtered.tab &&
+cat es_iso2kegg_filtered.tab | cut -f 2 | sort -u | wc -l
+#5198 of 51439 10.1%
+
+#iso2kog
+awk 'NR==FNR{c[$1]++;next};c[$1]' es_unique_isos.tab  es_iso2kogClass_final.tab >  es_iso2kogClass_final_filtered.tab &&
+cat es_iso2kogClass_final_filtered.tab | wc -l
+#16402 genes have kog class 
+
+##################
+##ES DGE see https://github.com/z0on/tag-based_RNAseq
+#retrim raw files
+
+#26/1 missing trimmed and repaired samples for 7310-7311, will try re-running the script below
+
+gunzip 7309_S1_R1_001.fastq.gz &&
+gunzip 7309_S1_R2_001.fastq.gz &&
+cat 7309_S1_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7309_S1_R1_001.trim &&
+cat 7309_S1_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7309_S1_R2_001.trim &&
+rePair.pl 7309_S1_R1_001.trim 7309_S1_R2_001.trim 
+
+#re-ran 26/1
+
+gunzip 7310_S2_R1_001.fastq.gz &&
+gunzip 7310_S2_R2_001.fastq.gz &&
+cat 7310_S2_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7310_S2_R1_001.trim &&
+cat 7310_S2_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7310_S2_R2_001.trim &&
+rePair.pl 7310_S2_R1_001.trim 7310_S2_R2_001.trim &&
+gzip 7310_S2_R1_001.fastq &&
+gzip 7310_S2_R2_001.fastq &&
+gunzip 7311_S3_R1_001.fastq.gz &&
+gunzip 7311_S3_R2_001.fastq.gz &&
+cat 7311_S3_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7311_S3_R1_001.trim &&
+cat 7311_S3_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7311_S3_R2_001.trim &&
+rePair.pl 7311_S3_R1_001.trim 7311_S3_R2_001.trim &&
+gzip 7311_S3_R1_001.fastq &&
+gzip 7311_S3_R2_001.fastq &&
+mv R1_*.trim es_dge &&
+mv R2_*.trim es_dge &&
+mv Unp_7*.trim es_dge
+
+
+gunzip 7312_S4_R1_001.fastq.gz &&
+gunzip 7312_S4_R2_001.fastq.gz &&
+cat 7312_S4_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7312_S4_R1_001.trim &&
+cat 7312_S4_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7312_S4_R2_001.trim &&
+rePair.pl 7312_S4_R1_001.trim 7312_S4_R2_001.trim &&
+gzip 7312_S4_R1_001.fastq &&
+gzip 7312_S4_R2_001.fastq &&
+gunzip 7313_S5_R1_001.fastq.gz &&
+gunzip 7313_S5_R2_001.fastq.gz &&
+cat 7313_S5_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7313_S5_R1_001.trim &&
+cat 7313_S5_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7313_S5_R2_001.trim &&
+rePair.pl 7313_S5_R1_001.trim 7313_S5_R2_001.trim &&
+gzip 7313_S5_R1_001.fastq &&
+gzip 7313_S5_R2_001.fastq &&
+gunzip 7314_S6_R1_001.fastq.gz &&
+gunzip 7314_S6_R2_001.fastq.gz &&
+cat 7314_S6_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7314_S6_R1_001.trim &&
+cat 7314_S6_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7314_S6_R2_001.trim &&
+rePair.pl 7314_S6_R1_001.trim 7314_S6_R2_001.trim &&
+gzip 7314_S6_R1_001.fastq &&
+gzip 7314_S6_R2_001.fastq &&
+
+gunzip 7315_S7_R1_001.fastq.gz &&
+gunzip 7315_S7_R2_001.fastq.gz &&
+cat 7315_S7_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7315_S7_R1_001.trim &&
+cat 7315_S7_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7315_S7_R2_001.trim &&
+rePair.pl 7315_S7_R1_001.trim 7315_S7_R2_001.trim &&
+gzip 7315_S7_R1_001.fastq &&
+gzip 7315_S7_R2_001.fastq &&
+gunzip 7316_S8_R1_001.fastq.gz &&
+gunzip 7316_S8_R2_001.fastq.gz &&
+cat 7316_S8_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7316_S8_R1_001.trim &&
+cat 7316_S8_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7316_S8_R2_001.trim &&
+rePair.pl 7316_S8_R1_001.trim 7316_S8_R2_001.trim &&
+gzip 7316_S8_R1_001.fastq &&
+gzip 7316_S8_R2_001.fastq &&
+gunzip 7317_S9_R1_001.fastq.gz &&
+gunzip 7317_S9_R2_001.fastq.gz &&
+cat 7317_S9_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7317_S9_R1_001.trim &&
+cat 7317_S9_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7317_S9_R2_001.trim &&
+rePair.pl 7317_S9_R1_001.trim 7317_S9_R2_001.trim &&
+gzip 7317_S9_R1_001.fastq &&
+gzip 7317_S9_R2_001.fastq 
+
+gunzip 7318_S10_R1_001.fastq.gz &&
+gunzip 7318_S10_R2_001.fastq.gz &&
+cat 7318_S10_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7318_S10_R1_001.trim &&
+cat 7318_S10_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7318_S10_R2_001.trim &&
+rePair.pl 7318_S10_R1_001.trim 7318_S10_R2_001.trim &&
+gzip 7318_S10_R1_001.fastq &&
+gzip 7318_S10_R2_001.fastq &&
+gunzip 7319_S11_R1_001.fastq.gz &&
+gunzip 7319_S11_R2_001.fastq.gz &&
+cat 7319_S11_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7319_S11_R1_001.trim &&
+cat 7319_S11_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7319_S11_R2_001.trim &&
+rePair.pl 7319_S11_R1_001.trim 7319_S11_R2_001.trim &&
+gzip 7319_S11_R1_001.fastq &&
+gzip 7319_S11_R2_001.fastq &&
+gunzip 7320_S12_R1_001.fastq.gz &&
+gunzip 7320_S12_R2_001.fastq.gz &&
+cat 7320_S12_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7320_S12_R1_001.trim &&
+cat 7320_S12_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7320_S12_R2_001.trim &&
+rePair.pl 7320_S12_R1_001.trim 7320_S12_R2_001.trim &&
+gzip 7320_S12_R1_001.fastq &&
+gzip 7320_S12_R2_001.fastq 
+
+gunzip 7321_S13_R1_001.fastq.gz &&
+gunzip 7321_S13_R2_001.fastq.gz &&
+cat 7321_S13_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7321_S13_R1_001.trim &&
+cat 7321_S13_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7321_S13_R2_001.trim &&
+rePair.pl 7321_S13_R1_001.trim 7321_S13_R2_001.trim &&
+gzip 7321_S13_R1_001.fastq &&
+gzip 7321_S13_R2_001.fastq &&
+gunzip 7322_S14_R1_001.fastq.gz &&
+gunzip 7322_S14_R2_001.fastq.gz &&
+cat 7322_S14_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7322_S14_R1_001.trim &&
+cat 7322_S14_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7322_S14_R2_001.trim &&
+rePair.pl 7322_S14_R1_001.trim 7322_S14_R2_001.trim &&
+gzip 7322_S14_R1_001.fastq &&
+gzip 7322_S14_R2_001.fastq &&
+gunzip 7323_S15_R1_001.fastq.gz &&
+gunzip 7323_S15_R2_001.fastq.gz &&
+cat 7323_S15_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7323_S15_R1_001.trim &&
+cat 7323_S15_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7323_S15_R2_001.trim &&
+rePair.pl 7323_S15_R1_001.trim 7323_S15_R2_001.trim &&
+gzip 7323_S15_R1_001.fastq &&
+gzip 7323_S15_R2_001.fastq &&
+gunzip 6761_S86_R1_001.fastq.gz &&
+gunzip 6761_S86_R2_001.fastq.gz &&
+cat 6761_S86_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 6761_S86_R1_001.trim &&
+cat 6761_S86_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 6761_S86_R2_001.trim &&
+rePair.pl 6761_S86_R1_001.trim 6761_S86_R2_001.trim &&
+gzip 6761_S86_R1_001.fastq &&
+gzip 6761_S86_R2_001.fastq 
+
+#Move to es_dge and compress
+mv R1_*.trim es_dge &&
+mv R2_*.trim es_dge &&
+mv Unp_6*.trim es_dge &&
+mv Unp_7*.trim es_dge &&
+cd es_dge &&
+gzip *.trim
+
+
+#didn't run (wrong directory):
+#reran 26/1/21
+gunzip 7312_S4_R1_001.fastq.gz &&
+gunzip 7312_S4_R2_001.fastq.gz &&
+cat 7312_S4_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7312_S4_R1_001.trim &&
+cat 7312_S4_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7312_S4_R2_001.trim &&
+rePair.pl 7312_S4_R1_001.trim 7312_S4_R2_001.trim &&
+gzip 7312_S4_R1_001.fastq &&
+gzip 7312_S4_R2_001.fastq &&
+gunzip 7313_S5_R1_001.fastq.gz &&
+gunzip 7313_S5_R2_001.fastq.gz &&
+cat 7313_S5_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7313_S5_R1_001.trim &&
+cat 7313_S5_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7313_S5_R2_001.trim &&
+rePair.pl 7313_S5_R1_001.trim 7313_S5_R2_001.trim &&
+gzip 7313_S5_R1_001.fastq &&
+gzip 7313_S5_R2_001.fastq &&
+gunzip 7314_S6_R1_001.fastq.gz &&
+gunzip 7314_S6_R2_001.fastq.gz &&
+cat 7314_S6_R1_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7314_S6_R1_001.trim &&
+cat 7314_S6_R2_001.fastq | fastx_clipper -a AAAAAAAAA -a TTTTTTTTT -a GATCGGAAGAGCACACGTCTGAACTCCAGTCACCTGAAGCTATCTCGTAT -l 50 -Q33 | fastq_quality_filter -Q33 -q 20 -p 80 > 7314_S6_R2_001.trim &&
+rePair.pl 7314_S6_R1_001.trim 7314_S6_R2_001.trim &&
+gzip 7314_S6_R1_001.fastq &&
+gzip 7314_S6_R2_001.fastq &&
+mv R1_*.trim es_dge &&
+mv R2_*.trim es_dge &&
+mv Unp_7*.trim es_dge &&
+cd es_dge &&
+gzip *.trim
+
+###################
+#references data
+#made bowtie database
+bowtie2-build es_iso_filtered.fasta es_iso_filtered.fasta
+#count table
+
+
+
+bowtie2 --local -x es_iso_filtered.fasta -1 R1_6761_S86_R1_001.trim -2 R2_6761_S86_R2_001.trim -U Unp_6761_S86_R1_001.trim_6761_S86_R2_001.trim -S DC110.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_6761_S86_R1_001.trim &&
+gzip R2_6761_S86_R2_001.trim &&
+gzip Unp_6761_S86_R1_001.trim_6761_S86_R2_001.trim &&
+samcount.pl DC110.sam es_seq2iso_filtered.tab aligner=bowtie2 > DC110.sam.counts &&
+gzip DC110.sam &&
+bowtie2 --local -x es_iso_filtered.fasta -1 R1_7309_S1_R1_001.trim -2 R2_7309_S1_R2_001.trim -U Unp_7309_S1_R1_001.trim_7309_S1_R2_001.trim -S DC24.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7309_S1_R1_001.trim &&
+gzip R2_7309_S1_R2_001.trim &&
+gzip Unp_7309_S1_R1_001.trim_7309_S1_R2_001.trim &&
+samcount.pl DC24.sam es_seq2iso_filtered.tab aligner=bowtie2 > DC24.sam.counts &&
+gzip DC24.sam &&
+bowtie2 --local -x es_iso_filtered.fasta -1 R1_7310_S2_R1_001.trim -2 R2_7310_S2_R2_001.trim -U Unp_7310_S2_R1_001.trim_7310_S2_R2_001.trim -S DC33.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R2_7310_S2_R2_001.trim &&
+gzip R1_7310_S2_R1_001.trim &&
+gzip Unp_7310_S2_R1_001.trim_7310_S2_R2_001.trim &&
+samcount.pl DC33.sam es_seq2iso_filtered.tab aligner=bowtie2 > DC33.sam.counts &&
+gzip DC33.sam &&
+bowtie2 --local -x es_iso_filtered.fasta -1 R1_7311_S3_R1_001.trim -2 R2_7311_S3_R2_001.trim -U Unp_7311_S3_R1_001.trim_7311_S3_R2_001.trim -S DC39.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7311_S3_R1_001.trim &&
+gzip R2_7311_S3_R2_001.trim &&
+gzip Unp_7311_S3_R1_001.trim_7311_S3_R2_001.trim &&
+samcount.pl DC39.sam es_seq2iso_filtered.tab aligner=bowtie2 > DC39.sam.counts &&
+gzip DC39.sam &&
+bowtie2 --local -x es_iso_filtered.fasta -1 R1_7312_S4_R1_001.trim -2 R2_7312_S4_R2_001.trim -U Unp_7312_S4_R1_001.trim_7312_S4_R2_001.trim -S DC56.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7312_S4_R1_001.trim &&
+gzip R2_7312_S4_R2_001.trim &&
+gzip Unp_7312_S4_R1_001.trim_7312_S4_R2_001.trim &&
+samcount.pl DC56.sam es_seq2iso_filtered.tab aligner=bowtie2 > DC56.sam.counts &&
+gzip DC56.sam &&
+bowtie2 --local -x es_iso_filtered.fasta -1 R1_7313_S5_R1_001.trim -2 R2_7313_S5_R2_001.trim -U Unp_7313_S5_R1_001.trim_7313_S5_R2_001.trim -S DC85.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7313_S5_R1_001.trim &&
+gzip R2_7313_S5_R2_001.trim &&
+gzip Unp_7313_S5_R1_001.trim_7313_S5_R2_001.trim &&
+samcount.pl DC85.sam es_seq2iso_filtered.tab aligner=bowtie2 > DC85.sam.counts &&
+gzip DC85.sam &&
+bowtie2 --local -x es_iso_filtered.fasta -1 R1_7314_S6_R1_001.trim -2 R2_7314_S6_R2_001.trim -U Unp_7314_S6_R1_001.trim_7314_S6_R2_001.trim -S DC93.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7314_S6_R1_001.trim &&
+gzip R2_7314_S6_R2_001.trim &&
+gzip Unp_7314_S6_R1_001.trim_7314_S6_R2_001.trim &&
+
+#killed on 28/1/21... memory issue
+#tried on nanopore drive and also tried to free up space on both drives
+samcount.pl DC93.sam es_seq2iso_filtered.tab aligner=bowtie2 > DC93.sam.counts &&
+gzip DC93.sam && 
+#tried next script... still killed even with 1 tb of memory available 
+
+Tested DC97 on 30 jan 
+bowtie2 --local -x es_iso_filtered.fasta -1 R1_7315_S7_R1_001.trim -2 R2_7315_S7_R2_001.trim -U Unp_7315_S7_R1_001.trim_7315_S7_R2_001.trim -S DC97.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7315_S7_R1_001.trim &&
+gzip R2_7315_S7_R2_001.trim &&
+gzip Unp_7315_S7_R1_001.trim_7315_S7_R2_001.trim &&
+samcount.pl DC97.sam es_seq2iso_filtered.tab aligner=bowtie2 > DC97.sam.counts &&
+gzip DC97.sam
+
+#97 WORKED, BUT 93 STILL HASN'T yet
+ 
+bowtie2 --local -x es_iso_filtered.fasta -1 R1_7316_S8_R1_001.trim -2 R2_7316_S8_R2_001.trim -U Unp_7316_S8_R1_001.trim_7316_S8_R2_001.trim -S DC108.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7316_S8_R1_001.trim &&
+gzip R2_7316_S8_R2_001.trim &&
+gzip Unp_7316_S8_R1_001.trim_7316_S8_R2_001.trim &&
+samcount.pl DC108.sam es_seq2iso_filtered.tab aligner=bowtie2 > DC108.sam.counts &&
+gzip DC108.sam &&
+bowtie2 --local -x es_iso_filtered.fasta -1 R1_7317_S9_R1_001.trim -2 R2_7317_S9_R2_001.trim -U Unp_7317_S9_R1_001.trim_7317_S9_R2_001.trim -S DC112.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7317_S9_R1_001.trim &&
+gzip R2_7317_S9_R2_001.trim &&
+gzip Unp_7317_S9_R1_001.trim_7317_S9_R2_001.trim &&
+samcount.pl DC112.sam es_seq2iso_filtered.tab aligner=bowtie2 > DC112.sam.counts &&
+gzip DC112.sam &&
+bowtie2 --local -x es_iso_filtered.fasta -1 R1_7318_S10_R1_001.trim -2 R2_7318_S10_R2_001.trim -U Unp_7318_S10_R1_001.trim_7318_S10_R2_001.trim -S DC114.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7318_S10_R1_001.trim &&
+gzip R2_7318_S10_R2_001.trim &&
+gzip Unp_7318_S10_R1_001.trim_7318_S10_R2_001.trim &&
+samcount.pl DC114.sam es_seq2iso_filtered.tab aligner=bowtie2 > DC114.sam.counts &&
+gzip DC114.sam && 
+bowtie2 --local -x es_iso_filtered.fasta -1 R1_7319_S11_R1_001.trim -2 R2_7319_S11_R2_001.trim -U Unp_7319_S11_R1_001.trim_7319_S11_R2_001.trim -S DC118.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7319_S11_R1_001.trim &&
+gzip R2_7319_S11_R2_001.trim &&
+gzip Unp_7319_S11_R1_001.trim_7319_S11_R2_001.trim &&
+
+#stopped here because of typo 1/2/21
+
+samcount.pl DC118.sam es_seq2iso_filtered.tab aligner=bowtie2 > DC118.sam.counts &&
+gzip DC118.sam &&
+bowtie2 --local -x es_iso_filtered.fasta -1 R1_7320_S12_R1_001.trim -2 R2_7320_S12_R2_001.trim -U Unp_7320_S12_R1_001.trim_7320_S12_R2_001.trim -S DC123.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7320_S12_R1_001.trim &&
+gzip R2_7320_S12_R2_001.trim &&
+gzip Unp_7320_S12_R1_001.trim_7320_S12_R2_001.trim &&
+samcount.pl DC123.sam es_seq2iso_filtered.tab aligner=bowtie2 > DC123.sam.counts &&
+gzip DC123.sam &&
+bowtie2 --local -x es_iso_filtered.fasta -1 R1_7321_S13_R1_001.trim -2 R2_7321_S13_R2_001.trim -U Unp_7321_S13_R1_001.trim_7321_S13_R2_001.trim -S DC131.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7321_S13_R1_001.trim &&
+gzip R2_7321_S13_R2_001.trim &&
+gzip Unp_7321_S13_R1_001.trim_7321_S13_R2_001.trim &&
+samcount.pl DC131.sam es_seq2iso_filtered.tab aligner=bowtie2 > DC131.sam.counts &&
+gzip DC131.sam && 
+bowtie2 --local -x es_iso_filtered.fasta -1 R1_7322_S14_R1_001.trim -2 R2_7322_S14_R2_001.trim -U Unp_7322_S14_R1_001.trim_7322_S14_R2_001.trim -S DC135.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7322_S14_R1_001.trim &&
+gzip R2_7322_S14_R2_001.trim &&
+gzip Unp_7322_S14_R1_001.trim_7322_S14_R2_001.trim &&
+samcount.pl DC135.sam es_seq2iso_filtered.tab aligner=bowtie2 > DC135.sam.counts &&
+gzip DC135.sam &&
+bowtie2 --local -x es_iso_filtered.fasta -1 R1_7323_S15_R1_001.trim -2 R2_7323_S15_R2_001.trim -U Unp_7323_S15_R1_001.trim_7323_S15_R2_001.trim -S DC136.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7323_S15_R1_001.trim &&
+gzip R2_7323_S15_R2_001.trim &&
+gzip Unp_7323_S15_R1_001.trim_7323_S15_R2_001.trim &&
+samcount.pl DC136.sam es_seq2iso_filtered.tab aligner=bowtie2 > DC136.sam.counts &&
+gzip DC136.sam &&
+samcount.pl DC93.sam es_seq2iso_filtered.tab aligner=bowtie2 > DC93.sam.counts &&
+gzip DC93.sam 
+
+
+#still killed DC93, but all other counts are fine...
+
+#run once dc93 is also done
+#rerun whole block? 
+gunzip R1_7314_S6_R1_001.trim &&
+gunzip R2_7314_S6_R2_001.trim &&
+gunzip Unp_7314_S6_R1_001.trim_7314_S6_R2_001.trim &&
+bowtie2 --local -x es_iso_filtered.fasta -1 R1_7314_S6_R1_001.trim -2 R2_7314_S6_R2_001.trim -U Unp_7314_S6_R1_001.trim_7314_S6_R2_001.trim -S DC93.sam --no-hd --no-sq --no-unal -k 5 &&
+samcount.pl DC93.sam es_seq2iso_filtered.tab aligner=bowtie2 > DC93.sam.counts 
+
+#still killed!! 
+53,055,555 reads; of these:
+  38161943 (71.93%) were paired; of these:
+    4802824 (12.59%) aligned concordantly 0 times
+    6448891 (16.90%) aligned concordantly exactly 1 time
+    26910228 (70.52%) aligned concordantly >1 times
+    ----
+    4802824 pairs aligned concordantly 0 times; of these:
+      78461 (1.63%) aligned discordantly 1 time
+    ----
+    4724363 pairs aligned 0 times concordantly or discordantly; of these:
+      9448726 mates make up the pairs; of these:
+        5352688 (56.65%) aligned 0 times
+        775575 (8.21%) aligned exactly 1 time
+        3320463 (35.14%) aligned >1 times
+  14893612 (28.07%) were unpaired; of these:
+    1105405 (7.42%) aligned 0 times
+    2148342 (14.42%) aligned exactly 1 time
+    11639865 (78.15%) aligned >1 times
+92.92% overall alignment rate
+disregarding reads mapping to multiple isogroups
+Killed
+#is it beacuse it has way more reads than other samples? is this 
+
+34,543,363 reads; of these:
+  24891945 (72.06%) were paired; of these:
+    3517710 (14.13%) aligned concordantly 0 times
+    4354368 (17.49%) aligned concordantly exactly 1 time
+    17019867 (68.37%) aligned concordantly >1 times
+    ----
+    3517710 pairs aligned concordantly 0 times; of these:
+      59316 (1.69%) aligned discordantly 1 time
+    ----
+    3458394 pairs aligned 0 times concordantly or discordantly; of these:
+      6916788 mates make up the pairs; of these:
+        4165834 (60.23%) aligned 0 times
+        562304 (8.13%) aligned exactly 1 time
+        2188650 (31.64%) aligned >1 times
+  9651418 (27.94%) were unpaired; of these:
+    801714 (8.31%) aligned 0 times
+    1426006 (14.78%) aligned exactly 1 time
+    7423698 (76.92%) aligned >1 times
+
+#just working on one thread probably running out of memory 
+head -n 133627751 DC93.sam > DC93_1.sam &&
+tail -n +133627751 DC93.sam > DC93_2.sam
+
+samcount.pl DC93_1.sam es_seq2iso_filtered.tab aligner=bowtie2 > DC93_1.sam.counts &&
+samcount.pl DC93_2.sam es_seq2iso_filtered.tab aligner=bowtie2 > DC93_2.sam.counts 
+
+#put together and check for duplicate isogroups
+cat DC93_1.sam.counts DC93_2.sam.counts > DC93_full.sam.counts
+#summed duplicate isogroups in the two files
+awk '{b[$1]+=$2} END { for (i in b) { print i, b[i] } } ' DC93_full.sam.counts > DC93_final.counts
+
+#deleted intermediate files
+#renamed DC93_final.counts DC93.sam.counts
+
+#had to change the space separators to tabs in nano ctrl h
+
+expression_compiler.pl *.sam.counts > allcounts_es_filtered.txt &&
+gzip *.sam
+
+#9/4/21 #ignore to 'here'
+#trying to eliminate reads with the same annotation = splice variants? fragments of the same gene? 
+#need to get all possible annotation information from eggnog 
+
+#searched for protein coding regions
+#es
+
+#submitted _PRO.fas file to eggnog http://eggnog-mapper.embl.de/
+#used 'unfiltered file, because we can abbreviate it later and the preblasting takes too long
+
+#'here'
+
+###########################################################################
+#last step getting rid of contamination: taking only metazoan (no 'lower' eukaryotes 
+#and make sure not mitos, so that we don't count the same genes twice
+
+###########
+#what about with only metazoan?
+grep 'Metazoa\|Bilateria\|Nematoda\|Chromadorea\|Rhabditida\|Arthropoda\|Insecta\|Diptera\|Nematocera\|Drosophilidae\|Hymenoptera\|Lepidoptera\|Paraneoptera\|Chordata\|Verbrata\|Actinopterygii\|Mammalia\|Afrotheria\|Carnivora\|Chiroptera\|Cetartiodactyla\|Euarchontoglires\|Primates\|Cercopithecoidea\|Hominidae\|Rodentia\|Metatheria\|Testudines\|Aves' job_MM_ljurfn6d_annotations.tsv > es_metazoan_emapper_annotations.tab
+
+###star need to remap with only metazoan genes.
+#double checked to make sure there were no 
+ 
+#there are still some 'high level' annotations with only opisthokonta designation (e.g. tooth making proteins), but could be best for duplication/ noise to get rid of all but 'metazoan' level genes
+#removed about 10% of genes 
+
+#genes to remove
+grep 'Eukaryota\|Opisthokonta\|Fungi\|Ascomycota\|Sordariomycetes\|Hypocreales\|Nectriaceae\|Hypocreaceae\|Clavicipitaceae\|Glomerellales\|Magnaporthales\|Sordariles\|Sordariaceae\|Chartominaceae\|Ophiostomatales\|Leotiomycetes\|Euroiomycetes\|Onygenales\|Arthrodermataceae\|Eurotiales\|Chaetothyriomycetidae\|Dothideomycetes\|Dothideomycetidae\|Pleosporales\|Saccharomycetes\|Saccharomycetaceae\|Debaryomycetaceae\|Taphrinomycontina\|Basidiomycota\|Pucciniomycotina\|Agaricomycetes\|Agaricomycetes incertae sedis\|Agaricales\|Tremellales\|Ustilaginomycotina\|Fungi incertae sedis\|Apicomplexa\|Aconoidasida\|Haemosporida\|Piroplsmida\|Coccidia\|Sarcocystidae\|Ciliophora\|Pythiales\|Peronosporales\|Bacillariophyta\|Viridiplantae\|Streptophyta\|Liliopsida\|Poales\|asterids\|fabids\|Brassicales\|Chlororphyta\|Amoebozoa\|Kinetoplastida' job_MM_ljurfn6d_annotations.tsv > es_all_bad_annotations.tab
+
+#count of bad
+grep 'TRINITY' es_all_bad_annotations.tab | wc -l
+#6762
+
+#need to start from file that was 'filtered' for cross contamination.
+#need to remove the bad rather than keep the good to keep the unannotated gene
+
+#get only contig name
+cat es_all_bad_annotations.tab | cut -f 1 >es_all_bad_contigs.tab
+
+#try with bbmap 
+/mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/bbmap/filterbyname.sh in=es_iso_filtered.fasta out=es_iso_filtered_no_bad.fasta names=es_all_bad_contigs.tab include=f ow=t
+
+#worked
+grep '>' es_iso_filtered_no_bad.fasta | wc -l
+
+#129137
+
+grep '>' es_iso_filtered.fasta | wc -l
+
+#135659, so 6522 contigs were removed
+
+#get rid of mito 'contamination'
+
+#make blast database
+makeblastdb -in es_iso_filtered_no_bad.fasta -dbtype nucl &&
+
+
+##double check eurypon mito stuff 
+makeblastdb -in es_iso_filtered_no_bad.fasta -dbtype nucl &&
+blastn -query /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/hs_mitos/hs_mito_cds.fasta -db es_iso_filtered_no_bad.fasta -num_threads 6 -evalue 1 -num_descriptions 1 -num_alignments 1 -out tq.br &&
+perl /mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Carterio/transcriptome_utilities/RemoveContamSeq.pl type=blastn score=45 reads=es_iso_filtered_no_bad.fasta contam=rRNA, /media/nanopore/archive/trancriptomics/Lough_Hyne_backups/All_field_samples/RiboZero_RNA/hs_prok/hs_prok_dge/hs_mitos/hs_mito_cds.fasta table=es_mito_match.txt passed=es_iso_filtered_no_bad_no_mito.fasta
+
+#1 mito sequence removed 
+
+es_iso_filtered_no_bad_no_mito.fasta
+
+#mito genes in es (hand search) of 
+#atp6
+none
+
+#atp8
+none
+
+#atp9
+none
+
+#cox1
+none
+
+#cox2
+none
+
+#cox3 
+none
+
+#cytb
+none
+
+#nad1
+none
+
+#nad2 
+none
+
+#nad3
+
+#nad6
+none
+
+#nad4
+none 
+
+#nad4L
+none
+
+#nad5
+none 
+ 
+#:)
+
+#regenerating count table 
+#rename final file 
+
+cat es_iso_filtered_no_bad_no_mito.fasta > E_sp2_sponge_ref_transcriptome.fasta
+
+#seq2iso
+
+grep ">" E_sp2_sponge_ref_transcriptome.fasta | perl -pe 's/>(TRINITY_DN(\d+_c\d+_g\d+)\S+)/$1\tisogroup$2/' > E_sp2_sponge_ref_transcriptome_seq2iso1.tab 
+
+#replaced spaces with tabs 
+
+cat E_sp2_sponge_ref_transcriptome_seq2iso1.tab | cut -f 1,2 > E_sp2_sponge_ref_transcriptome_seq2iso.tab
+
+cat E_sp2_sponge_ref_transcriptome_seq2iso.tab | cut -f 2 | cut -d ' ' -f 1 | sort -u | wc -l
+#49911
+
+#count table
+#ref
+bowtie2-build E_sp2_sponge_ref_transcriptome.fasta E_sp2_sponge_ref_transcriptome.fasta
+
+###counting 
+gunzip *.trim.gz &&
+bowtie2 --local -x E_sp2_sponge_ref_transcriptome.fasta -1 R1_6761_S86_R1_001.trim -2 R2_6761_S86_R2_001.trim -U Unp_6761_S86_R1_001.trim_6761_S86_R2_001.trim -S DC110.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_6761_S86_R1_001.trim &&
+gzip R2_6761_S86_R2_001.trim &&
+gzip Unp_6761_S86_R1_001.trim_6761_S86_R2_001.trim &&
+samcount.pl DC110.sam E_sp2_sponge_ref_transcriptome_seq2iso.tab aligner=bowtie2 > DC110.sam.counts &&
+gzip DC110.sam &&
+bowtie2 --local -x E_sp2_sponge_ref_transcriptome.fasta -1 R1_7309_S1_R1_001.trim -2 R2_7309_S1_R2_001.trim -U Unp_7309_S1_R1_001.trim_7309_S1_R2_001.trim -S DC24.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7309_S1_R1_001.trim &&
+gzip R2_7309_S1_R2_001.trim &&
+gzip Unp_7309_S1_R1_001.trim_7309_S1_R2_001.trim &&
+samcount.pl DC24.sam E_sp2_sponge_ref_transcriptome_seq2iso.tab aligner=bowtie2 > DC24.sam.counts &&
+gzip DC24.sam &&
+bowtie2 --local -x E_sp2_sponge_ref_transcriptome.fasta -1 R1_7310_S2_R1_001.trim -2 R2_7310_S2_R2_001.trim -U Unp_7310_S2_R1_001.trim_7310_S2_R2_001.trim -S DC33.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R2_7310_S2_R2_001.trim &&
+gzip R1_7310_S2_R1_001.trim &&
+gzip Unp_7310_S2_R1_001.trim_7310_S2_R2_001.trim &&
+samcount.pl DC33.sam E_sp2_sponge_ref_transcriptome_seq2iso.tab aligner=bowtie2 > DC33.sam.counts &&
+gzip DC33.sam &&
+bowtie2 --local -x E_sp2_sponge_ref_transcriptome.fasta -1 R1_7311_S3_R1_001.trim -2 R2_7311_S3_R2_001.trim -U Unp_7311_S3_R1_001.trim_7311_S3_R2_001.trim -S DC39.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7311_S3_R1_001.trim &&
+gzip R2_7311_S3_R2_001.trim &&
+gzip Unp_7311_S3_R1_001.trim_7311_S3_R2_001.trim &&
+samcount.pl DC39.sam E_sp2_sponge_ref_transcriptome_seq2iso.tab aligner=bowtie2 > DC39.sam.counts &&
+gzip DC39.sam &&
+bowtie2 --local -x E_sp2_sponge_ref_transcriptome.fasta -1 R1_7312_S4_R1_001.trim -2 R2_7312_S4_R2_001.trim -U Unp_7312_S4_R1_001.trim_7312_S4_R2_001.trim -S DC56.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7312_S4_R1_001.trim &&
+gzip R2_7312_S4_R2_001.trim &&
+gzip Unp_7312_S4_R1_001.trim_7312_S4_R2_001.trim &&
+samcount.pl DC56.sam E_sp2_sponge_ref_transcriptome_seq2iso.tab aligner=bowtie2 > DC56.sam.counts &&
+gzip DC56.sam &&
+bowtie2 --local -x E_sp2_sponge_ref_transcriptome.fasta -1 R1_7313_S5_R1_001.trim -2 R2_7313_S5_R2_001.trim -U Unp_7313_S5_R1_001.trim_7313_S5_R2_001.trim -S DC85.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7313_S5_R1_001.trim &&
+gzip R2_7313_S5_R2_001.trim &&
+gzip Unp_7313_S5_R1_001.trim_7313_S5_R2_001.trim &&
+samcount.pl DC85.sam E_sp2_sponge_ref_transcriptome_seq2iso.tab aligner=bowtie2 > DC85.sam.counts &&
+gzip DC85.sam &&
+bowtie2 --local -x E_sp2_sponge_ref_transcriptome.fasta -1 R1_7315_S7_R1_001.trim -2 R2_7315_S7_R2_001.trim -U Unp_7315_S7_R1_001.trim_7315_S7_R2_001.trim -S DC97.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7315_S7_R1_001.trim &&
+gzip R2_7315_S7_R2_001.trim &&
+gzip Unp_7315_S7_R1_001.trim_7315_S7_R2_001.trim &&
+samcount.pl DC97.sam E_sp2_sponge_ref_transcriptome_seq2iso.tab aligner=bowtie2 > DC97.sam.counts &&
+gzip DC97.sam &&
+bowtie2 --local -x E_sp2_sponge_ref_transcriptome.fasta -1 R1_7316_S8_R1_001.trim -2 R2_7316_S8_R2_001.trim -U Unp_7316_S8_R1_001.trim_7316_S8_R2_001.trim -S DC108.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7316_S8_R1_001.trim &&
+gzip R2_7316_S8_R2_001.trim &&
+gzip Unp_7316_S8_R1_001.trim_7316_S8_R2_001.trim &&
+samcount.pl DC108.sam E_sp2_sponge_ref_transcriptome_seq2iso.tab aligner=bowtie2 > DC108.sam.counts &&
+gzip DC108.sam &&
+bowtie2 --local -x E_sp2_sponge_ref_transcriptome.fasta -1 R1_7317_S9_R1_001.trim -2 R2_7317_S9_R2_001.trim -U Unp_7317_S9_R1_001.trim_7317_S9_R2_001.trim -S DC112.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7317_S9_R1_001.trim &&
+gzip R2_7317_S9_R2_001.trim &&
+gzip Unp_7317_S9_R1_001.trim_7317_S9_R2_001.trim &&
+samcount.pl DC112.sam E_sp2_sponge_ref_transcriptome_seq2iso.tab aligner=bowtie2 > DC112.sam.counts &&
+gzip DC112.sam &&
+bowtie2 --local -x E_sp2_sponge_ref_transcriptome.fasta -1 R1_7318_S10_R1_001.trim -2 R2_7318_S10_R2_001.trim -U Unp_7318_S10_R1_001.trim_7318_S10_R2_001.trim -S DC114.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7318_S10_R1_001.trim &&
+gzip R2_7318_S10_R2_001.trim &&
+gzip Unp_7318_S10_R1_001.trim_7318_S10_R2_001.trim &&
+samcount.pl DC114.sam E_sp2_sponge_ref_transcriptome_seq2iso.tab aligner=bowtie2 > DC114.sam.counts &&
+gzip DC114.sam && 
+bowtie2 --local -x E_sp2_sponge_ref_transcriptome.fasta -1 R1_7319_S11_R1_001.trim -2 R2_7319_S11_R2_001.trim -U Unp_7319_S11_R1_001.trim_7319_S11_R2_001.trim -S DC118.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7319_S11_R1_001.trim &&
+gzip R2_7319_S11_R2_001.trim &&
+gzip Unp_7319_S11_R1_001.trim_7319_S11_R2_001.trim &&
+samcount.pl DC118.sam E_sp2_sponge_ref_transcriptome_seq2iso.tab aligner=bowtie2 > DC118.sam.counts &&
+gzip DC118.sam &&
+bowtie2 --local -x E_sp2_sponge_ref_transcriptome.fasta -1 R1_7320_S12_R1_001.trim -2 R2_7320_S12_R2_001.trim -U Unp_7320_S12_R1_001.trim_7320_S12_R2_001.trim -S DC123.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7320_S12_R1_001.trim &&
+gzip R2_7320_S12_R2_001.trim &&
+gzip Unp_7320_S12_R1_001.trim_7320_S12_R2_001.trim &&
+samcount.pl DC123.sam E_sp2_sponge_ref_transcriptome_seq2iso.tab aligner=bowtie2 > DC123.sam.counts &&
+gzip DC123.sam &&
+bowtie2 --local -x E_sp2_sponge_ref_transcriptome.fasta -1 R1_7321_S13_R1_001.trim -2 R2_7321_S13_R2_001.trim -U Unp_7321_S13_R1_001.trim_7321_S13_R2_001.trim -S DC131.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7321_S13_R1_001.trim &&
+gzip R2_7321_S13_R2_001.trim &&
+gzip Unp_7321_S13_R1_001.trim_7321_S13_R2_001.trim &&
+samcount.pl DC131.sam E_sp2_sponge_ref_transcriptome_seq2iso.tab aligner=bowtie2 > DC131.sam.counts &&
+gzip DC131.sam && 
+bowtie2 --local -x E_sp2_sponge_ref_transcriptome.fasta -1 R1_7322_S14_R1_001.trim -2 R2_7322_S14_R2_001.trim -U Unp_7322_S14_R1_001.trim_7322_S14_R2_001.trim -S DC135.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7322_S14_R1_001.trim &&
+gzip R2_7322_S14_R2_001.trim &&
+gzip Unp_7322_S14_R1_001.trim_7322_S14_R2_001.trim &&
+samcount.pl DC135.sam E_sp2_sponge_ref_transcriptome_seq2iso.tab aligner=bowtie2 > DC135.sam.counts &&
+gzip DC135.sam &&
+bowtie2 --local -x E_sp2_sponge_ref_transcriptome.fasta -1 R1_7323_S15_R1_001.trim -2 R2_7323_S15_R2_001.trim -U Unp_7323_S15_R1_001.trim_7323_S15_R2_001.trim -S DC136.sam --no-hd --no-sq --no-unal -k 5 &&
+gzip R1_7323_S15_R1_001.trim &&
+gzip R2_7323_S15_R2_001.trim &&
+gzip Unp_7323_S15_R1_001.trim_7323_S15_R2_001.trim &&
+samcount.pl DC136.sam E_sp2_sponge_ref_transcriptome_seq2iso.tab aligner=bowtie2 > DC136.sam.counts &&
+gzip DC136.sam 
+
+
+###need to do some extra work for DC93
+bowtie2 --local -x E_sp2_sponge_ref_transcriptome.fasta -1 R1_7314_S6_R1_001.trim -2 R2_7314_S6_R2_001.trim -U Unp_7314_S6_R1_001.trim_7314_S6_R2_001.trim -S DC93.sam --no-hd --no-sq --no-unal -k 5 &&
+head -n 133627751 DC93.sam > DC93_1.sam &&
+tail -n +133627751 DC93.sam > DC93_2.sam &&
+samcount.pl DC93_1.sam E_sp2_sponge_ref_transcriptome_seq2iso.tab aligner=bowtie2 > DC93_1.sam.counts &&
+samcount.pl DC93_2.sam E_sp2_sponge_ref_transcriptome_seq2iso.tab aligner=bowtie2 > DC93_2.sam.counts &&
+cat DC93_1.sam.counts DC93_2.sam.counts > DC93_full.sam.counts &&
+awk '{b[$1]+=$2} END { for (i in b) { print i, b[i] } } ' DC93_full.sam.counts > DC93.sam.counts
+
+#delete intermediate files
+
+#change the space separators to tabs in nano ctrl h
+
+samcount.pl DC93.sam E_sp2_sponge_ref_transcriptome_seq2iso.tab aligner=bowtie2 > DC93.sam.counts &&
+gzip DC93.sam  
+
+expression_compiler.pl *.sam.counts > allcounts_es_sponge_filtered.txt 
+
+#################
+###regenerating/finalizing tabular files
+#################
+
+#final assembly stats
+ seq_stats.pl E_sp2_sponge_ref_transcriptome.fasta
+
+
+#just metazoan list will inflate the numbers because it will still have annotations for contigs that are not present in the final assembly...
+#can I use seq 2 iso list to print using grep?
+
+cat E_sp2_sponge_ref_transcriptome_seq2iso.tab | cut -f 1 > es_seq2iso_short.tab
+
+fgrep -f es_seq2iso_short.tab es_metazoan_emapper_annotations.tab > es_final_annotation_list.tab
+
+cat es_metazoan_emapper_annotations.tab | wc -l &&
+cat final_annotation_list.tab | wc -l
+
+#:) 
+
+#how many isogroups?
+cat E_sp2_sponge_ref_transcriptome_seq2iso.tab | cut -f 2 | cut -d ' ' -f 1 | sort -u | wc -l
+#49911 isogroups for es 
+
+awk -F "\t" 'BEGIN {OFS="\t" }{print $1,$7 }' es_final_annotation_list.tab  | grep GO | perl -pe 's/,/;/g' > E_sp2_sponge_ref_transcriptome_gene2go.tab
+
+#isogroups for GO
+cat E_sp2_sponge_ref_transcriptome_gene2go.tab | perl -pe 's/(TRINITY_DN(\d+_c\d+_g\d+)\S+)/$1\tisogroup$2/' > es_isos_gene2go.tab 
+
+cat es_isos_gene2go.tab | cut -f 2 | sort -u | wc -l
+#14614 isogroups of 49911 (29.2%) have go
+
+#save so there is just one instance of each isogroup to GO term
+cat es_isos_gene2go.tab | cut -f 2,3 > es_iso2go1.tab &&
+awk '!seen[$1]++' es_iso2go1.tab  > E_sp2_sponge_ref_transcriptome_gene2go_final.tab &&
+cat E_sp2_sponge_ref_transcriptome_gene2go_final.tab | cut -f 1 | sort -u | wc -l
+
+#14614 isogroups of 49911 (29.2%)  isogroups have GO terms
+
+###summarizing KOG classes
+#es
+awk -F "\t" 'BEGIN {OFS="\t" }{print $1,$21 }' es_final_annotation_list.tab | grep -Ev "[,#S]" >es_contig2kogClass1.tab
+
+#kog_classes.txt file in the same dir):
+awk 'BEGIN {FS=OFS="\t"} NR==FNR {a[$1] = $2;next} {print $1,a[$2]}' /mnt/nanopore/Transcriptomics/Unaligned_150904_SN7001375_0225_BH7NG2BCXX/Project_STR667/Sample_STR667_Cliona/Symbiodinium/kog_classes.txt es_contig2kogClass1.tab > es_contig2kogClass2.tab
+
+cat es_contig2kogClass2.tab | awk '{if ($2!="") print }' > es_contig2kogClass_final.tab
+
+cat es_contig2kogClass_final.tab | wc -l
+
+#39576 contigs of 111360  have KOG class (32%)
+
+#now for isogroups
+cat es_contig2kogClass_final.tab | perl -pe 's/(TRINITY_DN(\d+_c\d+_g\d+)\S+)/$1\tisogroup$2/' > es_with_isos_contig2kogClass.tab &&
+cat es_with_isos_contig2kogClass.tab | cut -f 2,3  >es_iso2kogClass1.tab &&
+#remove duplicate lists of isogroups (they have the same annotations :) )
+awk '!seen[$1]++' es_iso2kogClass1.tab  > es_iso2kogClass_2.tab &&
+#Below keeps only lines with kog annotation (if some are empty)
+cat es_iso2kogClass_2.tab | awk '{if ($2!="") print }' > E_sp2_sponge_ref_transcriptome_iso2kogClass_final.tab &&
+cat E_sp2_sponge_ref_transcriptome_iso2kogClass_final.tab | wc -l
+
+#es 15033 isogroups of 49911 have kog classes (30.11%) 
+
+#Kegg
+fasta2SBH.pl E_sp2_sponge_ref_transcriptome.fasta > es_transcriptome_4kegg.fasta
+
+# use web browser to submit transcriptome_4kegg.fasta file to KEGG's KAAS server ( http://www.genome.jp/kegg/kaas/ )
+# select SBH algorithm, upload nucleotide query, select representative genes for model inverts - Drosophila and C. elegans plus Nvec and Hydra, and tricoplax
+#cin, dme, cel, aqu, tad, hmg, nve
+#check 'nucleotide' on query type
+
+# Once it is done, download the 'text' output from KAAS, name it query.ko (default)
+
+cat es_query.ko | awk '{if ($2!="") print }' > E_sp2_sponge_ref_transcriptome_iso2kegg.tab &&
+cat E_sp2_sponge_ref_transcriptome_iso2kegg.tab | cut -f 2 | sort -u | wc -l 
+
+#3588 of 49911 isogroups have kegg annotations (7.19%)
+
+#gene names
+
+awk -F "\t" 'BEGIN {OFS="\t" }{print $1,$6,$22 }' es_final_annotation_list.tab | grep -Ev "\tNA" >es_contig2geneName.tab &&
+#also includes new format of eggnog which separates names and descriptions
+sed 's/\t/ /2' es_contig2geneName.tab > es_contig2geneName2.tab &&
+cat es_contig2geneName2.tab | wc -l
+
+#54219 contigs of  have gene names
+
+#add in isogroups
+cat es_contig2geneName2.tab | perl -pe 's/(TRINITY_DN(\d+_c\d+_g\d+)\S+)/$1\tisogroup$2/' > es_with_isos_contig2geneName.tab &&
+
+#iso2gene names 
+cat es_with_isos_contig2geneName.tab| cut -f 2,3  >es_iso2geneName1.tab &&
+awk '!seen[$1]++' es_iso2geneName1.tab  > es_iso2geneName3.tab &&
+cat es_iso2geneName3.tab | awk '{if ($2!="") print }' > E_sp2_sponge_ref_transcriptome_iso2geneName_final.tab &&
+cat E_sp2_sponge_ref_transcriptome_iso2geneName_final.tab | wc -l
+
+#19837 isogroups of 49911 have gene names (39.7%)
+
+
+
+
+
+
+
+
+
+
+
+
+
