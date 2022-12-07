@@ -1,0 +1,7 @@
+condition,type
+GW3639_Concat_RNASeq_AACAAG,Shock,single-end
+GW3640_Concat_RNASeq_AACCGA,Shock,single-end
+GW3641.1_Concat_RNASeq_TGGCGA,Shock,single-end
+LowO2_Control1_Concat_RNASeq_CACACT,Control,single-end
+LowO2_Control2_Concat_RNASeq_CGAAGG,Control,single-end
+LowO2_Control3_Concat_RNASeq_AACGCC,Control,single-end

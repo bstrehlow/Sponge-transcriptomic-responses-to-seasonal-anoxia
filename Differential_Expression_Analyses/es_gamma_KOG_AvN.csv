@@ -1,0 +1,20 @@
+"","term","nseqs","delta.rank","pval","padj"
+"2","Cell wall/membrane/envelope biogenesis",180,-101,0.01985114609756,0.300520915309362
+"8","Replication, recombination and repair",160,-98,0.0316337805588802,0.300520915309362
+"15","Energy production and conversion",224,74,0.0604581535014614,0.382901638842589
+"19","RNA processing and modification",1,-752,0.173116433610165,0.660654443728521
+"7","Translation, ribosomal structure and biogenesis",214,50,0.21387868981002,0.660654443728521
+"13","Intracellular trafficking, secretion, and vesicular transport",68,-80,0.240854150601526,0.660654443728521
+"10","Inorganic ion transport and metabolism",118,61,0.243399005584192,0.660654443728521
+"1","Secondary metabolites biosynthesis, transport and catabolism",48,-71,0.380399272053976,0.825369311476304
+"17","Signal transduction mechanisms",43,-73,0.390964410699302,0.825369311476304
+"11","Amino acid transport and metabolism",191,33,0.439202934203084,0.83448557498586
+"6","Posttranslational modification, protein turnover, chaperones",107,30,0.582836682865873,0.901130388697584
+"3","Transcription",81,26,0.679773838554783,0.901130388697584
+"18","Cell motility",5,-93,0.706812253203122,0.901130388697584
+"14","Carbohydrate transport and metabolism",84,22,0.716758439777233,0.901130388697584
+"5","Coenzyme transport and metabolism",129,17,0.742108262996949,0.901130388697584
+"4","Nucleotide transport and metabolism",100,-15,0.787140234558692,0.901130388697584
+"16","Cell cycle control, cell division, chromosome partitioning",34,-23,0.806274558308365,0.901130388697584
+"12","Lipid transport and metabolism",80,6,0.930145325458608,0.959548133530829
+"9","Defense mechanisms",44,4,0.959548133530829,0.959548133530829

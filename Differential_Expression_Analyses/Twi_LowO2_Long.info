@@ -1,0 +1,9 @@
+condition,type
+LowO2_Control1_Concat_RNASeq_CACACT,Control,single-end
+LowO2_Control2_Concat_RNASeq_CGAAGG,Control,single-end
+LowO2_Control3_Concat_RNASeq_AACGCC,Control,single-end
+LowO2_Treat1_Concat_RNASeq_GCGCTG,LongTreat,single-end
+LowO2_Treat2_Concat_RNASeq_CAAGCA,LongTreat,single-end
+LowO2_Treat3_Concat_RNASeq_GACGAT,LongTreat,single-end
+LowO2_Treat4_Concat_RNASeq_ACCTAC,LongTreat,single-end
+LowO2_Treat5_Concat_RNASeq_AGAATC,LongTreat,single-end
