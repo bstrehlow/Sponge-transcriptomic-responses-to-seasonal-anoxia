@@ -13,7 +13,7 @@ The R script for determining differentially expressed genes can be found in: Dif
 
 Lists of all differentially expressed genes for each sponge species and their microbial symbionts are present in *_report.pdf files. These files also include boxplots of expression for each differentially expressed gene as well as logFC, p values, and adjusted p values. Report files were made using the ReportingTools package in R (Huntley et al., 2013).
 
-## Refrences
+## References
 Huntley MA, Larson JL, Chaivorapol C, Becker G, Lawrence M, Hackney JA, Kaminker JS (2013). “ReportingTools: an automated result processing and presentation toolkit for high throughput genomic analyses.” Bioinformatics. doi: 10.1093/bioinformatics/btt551.
 
 Love MI, Huber W, Anders S (2014). “Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2.” Genome Biology, 15, 550. doi: 10.1186/s13059-014-0550-8.
